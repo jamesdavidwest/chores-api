@@ -4,6 +4,8 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const choreRoutes = require('./routes/chores');
 const authRoutes = require('./routes/auth');
+const locationRoutes = require('./routes/locations');
+const userRoutes = require('./routes/users');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -17,6 +19,8 @@ app.use(bodyParser.json());
 // Routes
 app.use('/api/chores', choreRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/locations', locationRoutes);
+app.use('/api/users', userRoutes);
 
 // Error handling
 app.use(errorHandler);

@@ -1,7 +1,5 @@
-// src/utils/dataAccess.js
 const path = require('path');
 const fs = require('fs').promises;
-
 const DB_PATH = path.join(__dirname, '../../data/database.json');
 
 async function readDatabase() {
@@ -10,7 +8,6 @@ async function readDatabase() {
     return JSON.parse(data);
   } catch (error) {
     if (error.code === 'ENOENT') {
-      // If database doesn't exist, create it with empty data
       const initialData = {
         users: [],
         chores: [],
@@ -25,10 +22,38 @@ async function readDatabase() {
 }
 
 async function writeDatabase(data) {
-  await fs.writeFile(DB_PATH, JSON.stringify(data, null, 2));
+  const tempPath = `${DB_PATH}.tmp`;
+  try {
+    // Write to temp file first
+    await fs.writeFile(tempPath, JSON.stringify(data, null, 2));
+    // Then rename to actual file (atomic operation)
+    await fs.rename(tempPath, DB_PATH);
+  } catch (error) {
+    // Clean up temp file if it exists
+    try {
+      await fs.unlink(tempPath);
+    } catch (e) {
+      // Ignore error if temp file doesn't exist
+    }
+    throw error;
+  }
 }
 
-// Chores functions
+async function getUsers() {
+  const db = await readDatabase();
+  return db.users || [];
+}
+
+async function getLocations() {
+  const db = await readDatabase();
+  return db.locations || [];
+}
+
+async function getLocationById(id) {
+  const db = await readDatabase();
+  return db.locations.find(location => location.id === parseInt(id));
+}
+
 async function getChores() {
   const db = await readDatabase();
   return db.chores || [];
@@ -80,9 +105,12 @@ async function deleteChore(id) {
 }
 
 module.exports = {
+  getLocations,
+  getLocationById,
   getChores,
   getChoreById,
   createChore,
   updateChore,
-  deleteChore
+  deleteChore,
+  getUsers
 };
