@@ -162,7 +162,9 @@
       "name": "Clean Windows",
       "location_id": 7,
       "frequency_id": 2,
-      "assigned_to": 1
+      "assigned_to": 1,
+      "is_complete": false,
+      "last_completed": null
     },
     {
       "id": 11,
@@ -204,7 +206,9 @@
       "name": "Clean Gutters",
       "location_id": 8,
       "frequency_id": 4,
-      "assigned_to": 1
+      "assigned_to": 1,
+      "is_complete": true,
+      "last_completed": "2024-12-05T17:48:20.582Z"
     },
     {
       "id": 17,
