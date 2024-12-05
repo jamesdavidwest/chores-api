@@ -8,6 +8,8 @@ class CalendarService {
 
     async getChoresForCalendar(startDate, endDate) {
         return new Promise((resolve, reject) => {
+            console.log('Fetching chores for date range:', { startDate, endDate });
+            
             const query = `
                 SELECT 
                     c.*,
@@ -18,36 +20,39 @@ class CalendarService {
                 LEFT JOIN users u ON c.assigned_to = u.id
                 LEFT JOIN locations l ON c.location_id = l.id
                 LEFT JOIN frequency_types f ON c.frequency_id = f.id
-                WHERE 
-                    (c.next_occurrence BETWEEN ? AND ?) OR
-                    (c.frequency_id = 1) -- Include all daily chores
             `;
 
-            this.db.all(query, [startDate, endDate], (err, rows) => {
+            this.db.all(query, [], (err, rows) => {
                 if (err) {
+                    console.error('Database error:', err);
                     reject(err);
                     return;
                 }
+                console.log('Found chores:', rows);
                 resolve(this.transformChoresForCalendar(rows));
             });
         });
     }
 
     transformChoresForCalendar(chores) {
-        return chores.map(chore => ({
-            id: chore.id,
-            title: chore.name,
-            start: this.combineDateTime(chore.next_occurrence, chore.time_preference),
-            end: this.combineDateTime(chore.next_occurrence, chore.time_preference, 1), // 1 hour duration
-            allDay: false,
-            extendedProps: {
-                location: chore.location_name,
-                assignedTo: chore.assigned_to_name,
-                frequency: chore.frequency_name,
-                lastCompleted: chore.last_completed,
-                status: this.getChoreStatus(chore)
-            }
-        }));
+        return chores.map(chore => {
+            const event = {
+                id: chore.id,
+                title: chore.name,
+                start: this.combineDateTime(chore.next_occurrence || new Date().toISOString().split('T')[0], chore.time_preference),
+                end: this.combineDateTime(chore.next_occurrence || new Date().toISOString().split('T')[0], chore.time_preference, 1),
+                allDay: false,
+                extendedProps: {
+                    location: chore.location_name,
+                    assignedTo: chore.assigned_to_name,
+                    frequency: chore.frequency_name,
+                    lastCompleted: chore.last_completed,
+                    status: this.getChoreStatus(chore)
+                }
+            };
+            console.log('Transformed chore to event:', event);
+            return event;
+        });
     }
 
     combineDateTime(date, time, addHours = 0) {
@@ -60,11 +65,11 @@ class CalendarService {
     }
 
     getChoreStatus(chore) {
+        if (!chore.next_occurrence) return 'pending';
         const now = new Date();
         const nextOccurrence = new Date(chore.next_occurrence);
         
-        if (!chore.last_completed) return 'pending';
-        if (new Date(chore.last_completed) >= new Date(chore.next_occurrence)) return 'completed';
+        if (chore.last_completed && new Date(chore.last_completed) >= nextOccurrence) return 'completed';
         if (nextOccurrence < now) return 'overdue';
         return 'upcoming';
     }
@@ -74,10 +79,8 @@ class CalendarService {
             const now = new Date().toISOString();
             
             this.db.serialize(() => {
-                // Begin transaction
                 this.db.run('BEGIN TRANSACTION');
 
-                // Insert completion record
                 this.db.run(
                     'INSERT INTO chore_completions (chore_id, completed_by, completed_at) VALUES (?, ?, ?)',
                     [choreId, userId, now],
@@ -88,7 +91,6 @@ class CalendarService {
                             return;
                         }
 
-                        // Update the chore's last_completed and next_occurrence
                         this.db.get(
                             'SELECT frequency_id FROM chores WHERE id = ?',
                             [choreId],
@@ -99,7 +101,6 @@ class CalendarService {
                                     return;
                                 }
 
-                                // Calculate next occurrence based on frequency
                                 const nextOccurrence = this.calculateNextOccurrence(now, row.frequency_id);
                                 
                                 this.db.run(
