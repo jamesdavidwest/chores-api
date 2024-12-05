@@ -207,8 +207,8 @@
       "location_id": 8,
       "frequency_id": 4,
       "assigned_to": 1,
-      "is_complete": true,
-      "last_completed": "2024-12-05T17:48:20.582Z"
+      "is_complete": false,
+      "last_completed": null
     },
     {
       "id": 17,
@@ -243,7 +243,9 @@
       "name": "Pick Up Trash",
       "location_id": 7,
       "frequency_id": 1,
-      "assigned_to": 1
+      "assigned_to": 1,
+      "is_complete": true,
+      "last_completed": "2024-12-05T21:06:52.967Z"
     },
     {
       "id": 22,
@@ -271,7 +273,9 @@
       "name": "Pick Up Dirty Clothes",
       "location_id": 4,
       "frequency_id": 1,
-      "assigned_to": 1
+      "assigned_to": 1,
+      "is_complete": false,
+      "last_completed": null
     },
     {
       "id": 26,
