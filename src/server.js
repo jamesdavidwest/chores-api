@@ -6,6 +6,7 @@ const choreRoutes = require('./routes/chores');
 const authRoutes = require('./routes/auth');
 const locationRoutes = require('./routes/locations');
 const userRoutes = require('./routes/users');
+const calendarRoutes = require('./routes/calendar');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const app = express();
@@ -21,6 +22,7 @@ app.use('/api/chores', choreRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/calendar', calendarRoutes);
 
 // Error handling
 app.use(errorHandler);

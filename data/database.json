@@ -153,9 +153,9 @@
       "location_id": 4,
       "frequency_id": 2,
       "assigned_to": 4,
-      "is_complete": false,
-      "last_completed": null,
-      "updated_at": "2024-12-04T20:23:53.335Z"
+      "is_complete": true,
+      "last_completed": "2024-12-05T01:27:55.344Z",
+      "updated_at": "2024-12-05T01:27:55.357Z"
     },
     {
       "id": 10,
@@ -282,16 +282,19 @@
       "location_id": 7,
       "frequency_id": 1,
       "assigned_to": 3,
-      "is_complete": false,
-      "last_completed": null,
-      "updated_at": "2024-12-04T20:23:49.193Z"
+      "is_complete": true,
+      "last_completed": "2024-12-05T02:29:19.136Z",
+      "updated_at": "2024-12-05T02:29:19.144Z"
     },
     {
       "id": 28,
       "name": "Check Mail",
       "location_id": 8,
       "frequency_id": 1,
-      "assigned_to": 5
+      "assigned_to": 5,
+      "is_complete": false,
+      "last_completed": null,
+      "updated_at": "2024-12-05T02:29:13.105Z"
     }
   ]
 }
