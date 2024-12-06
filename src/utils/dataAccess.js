@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs').promises;
+const { validateDueDate, formatDueDate, DEFAULT_DUE_TIME } = require('./dateValidation');
 const DB_PATH = path.join(__dirname, '../../data/database.json');
 
 // Database read/write functions
@@ -68,10 +69,20 @@ async function getChoreById(id) {
 async function createChore(choreData) {
   const db = await readDatabase();
   if (!db.chores) db.chores = [];
-  
+
+  // Validate and process due date
+  const { due_date, due_time = DEFAULT_DUE_TIME, ...otherData } = choreData;
+  const dateValidation = validateDueDate(due_date, due_time);
+
+  if (!dateValidation.isValid) {
+    throw new Error(dateValidation.error);
+  }
+
   const newChore = {
     id: Math.max(0, ...db.chores.map(c => c.id)) + 1,
-    ...choreData
+    ...otherData,
+    due_date: formatDueDate(dateValidation.date),
+    created_at: new Date().toISOString()
   };
   
   db.chores.push(newChore);
@@ -84,8 +95,27 @@ async function updateChore(id, updates) {
   const index = db.chores.findIndex(chore => chore.id === parseInt(id));
   
   if (index === -1) return null;
+
+  // If updating due date, validate it
+  if (updates.due_date) {
+    const dateValidation = validateDueDate(
+      updates.due_date,
+      updates.due_time || DEFAULT_DUE_TIME
+    );
+
+    if (!dateValidation.isValid) {
+      throw new Error(dateValidation.error);
+    }
+
+    updates.due_date = formatDueDate(dateValidation.date);
+  }
   
-  db.chores[index] = { ...db.chores[index], ...updates };
+  db.chores[index] = { 
+    ...db.chores[index], 
+    ...updates,
+    updated_at: new Date().toISOString()
+  };
+  
   await writeDatabase(db);
   return db.chores[index];
 }

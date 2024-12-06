@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate, authorize } = require('../middleware/auth');
+const { DEFAULT_DUE_TIME } = require('../utils/dateValidation');
 const {
   getChores,
   getChoreById,
@@ -47,10 +48,26 @@ router.get('/:id', authenticate, async (req, res, next) => {
 // Create new chore (admin/manager only)
 router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
   try {
-    const newChore = await createChore(req.body);
+    const { due_date, due_time = DEFAULT_DUE_TIME, ...choreData } = req.body;
+
+    // If no due_date provided, default to today at DEFAULT_DUE_TIME
+    if (!due_date) {
+      const today = new Date();
+      choreData.due_date = today.toISOString().split('T')[0];
+      choreData.due_time = DEFAULT_DUE_TIME;
+    } else {
+      choreData.due_date = due_date;
+      choreData.due_time = due_time;
+    }
+
+    const newChore = await createChore(choreData);
     res.status(201).json(newChore);
   } catch (error) {
-    next(error);
+    if (error.message.includes('due date')) {
+      res.status(400).json({ error: error.message });
+    } else {
+      next(error);
+    }
   }
 });
 
@@ -80,7 +97,11 @@ router.put('/:id', authenticate, async (req, res, next) => {
     const updatedChore = await updateChore(req.params.id, req.body);
     res.json(updatedChore);
   } catch (error) {
-    next(error);
+    if (error.message.includes('due date')) {
+      res.status(400).json({ error: error.message });
+    } else {
+      next(error);
+    }
   }
 });
 
