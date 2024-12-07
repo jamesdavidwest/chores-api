@@ -85,244 +85,305 @@
     {
       "id": 5,
       "name": "yearly"
+    },
+    {
+      "id": 6,
+      "name": "once"
     }
   ],
   "chores": [
     {
       "id": 1,
-      "name": "Dishes",
-      "location_id": 1,
-      "frequency_id": 1,
-      "assigned_to": 4
+      "name": "Organize Garage Storage",
+      "location_id": 7,
+      "frequency_id": 6,
+      "assigned_to": 1,
+      "notes": "Sort and organize garage storage area. Tasks include: 1) Clear out old boxes 2) Install new shelving unit 3) Label storage bins 4) Move seasonal items to back shelves 5) Ensure cars can still park easily",
+      "due_date": "2024-12-14T00:00:00.000Z",
+      "due_time": "17:00",
+      "created_at": "2024-12-07T00:00:00.000Z",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "priority": "HIGH",
+      "last_modified": {
+        "date": "2024-12-07T00:00:00.000Z",
+        "modified_by": 1
+      },
+      "repeat_end_date": null
     },
     {
       "id": 2,
-      "name": "Wipe Kitchen Counters",
+      "name": "Deep Clean Kitchen",
       "location_id": 1,
-      "frequency_id": 1,
-      "assigned_to": 5
+      "frequency_id": 2,
+      "assigned_to": 4,
+      "notes": "Weekly kitchen deep clean checklist: 1) Clean microwave inside and out 2) Wipe down all cabinet fronts 3) Sanitize countertops and backsplash 4) Clean stovetop and oven front 5) Sweep and mop floor 6) Empty and clean trash can",
+      "due_date": "2024-12-09T00:00:00.000Z",
+      "due_time": "14:00",
+      "created_at": "2024-12-07T00:00:00.000Z",
+      "is_complete": true,
+      "completed_at": "2024-12-07T15:30:00.000Z",
+      "completed_by": 2,
+      "priority": "MEDIUM",
+      "last_modified": {
+        "date": "2024-12-07T15:30:00.000Z",
+        "modified_by": 2
+      },
+      "repeat_end_date": "2025-12-31T00:00:00.000Z"
     },
     {
       "id": 3,
-      "name": "Clean Dining Table",
-      "location_id": 1,
-      "frequency_id": 1,
-      "assigned_to": 4,
+      "name": "Christmas Decoration Setup",
+      "location_id": 3,
+      "frequency_id": 6,
+      "assigned_to": 5,
+      "notes": "Put up Christmas decorations in living room: 1) Set up tree 2) Hang stockings 3) Put up window lights 4) Arrange holiday pillows and throws 5) Set up nativity scene",
+      "due_date": "2024-12-08T00:00:00.000Z",
+      "due_time": "10:00",
+      "created_at": "2024-12-07T00:00:00.000Z",
       "is_complete": false,
-      "last_completed": null,
-      "updated_at": "2024-12-04T16:25:10.429Z"
+      "completed_at": null,
+      "completed_by": null,
+      "priority": "MEDIUM",
+      "last_modified": {
+        "date": "2024-12-07T00:00:00.000Z",
+        "modified_by": 2
+      },
+      "repeat_end_date": null
     },
     {
       "id": 4,
-      "name": "Take Out Trash",
-      "location_id": 7,
-      "frequency_id": 1,
-      "assigned_to": 5
+      "name": "Clean Bathrooms",
+      "location_id": 2,
+      "frequency_id": 2,
+      "assigned_to": 3,
+      "notes": "Weekly bathroom cleaning: 1) Clean toilets 2) Scrub showers/tubs 3) Clean mirrors and counters 4) Mop floors 5) Replace towels 6) Empty trash",
+      "due_date": "2024-12-10T00:00:00.000Z",
+      "due_time": "11:00",
+      "created_at": "2024-12-07T00:00:00.000Z",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "priority": "HIGH",
+      "last_modified": {
+        "date": "2024-12-07T00:00:00.000Z",
+        "modified_by": 3
+      },
+      "repeat_end_date": "2025-12-31T00:00:00.000Z"
     },
     {
       "id": 5,
-      "name": "Feed Pets",
+      "name": "Feed Pets Morning",
       "location_id": 7,
       "frequency_id": 1,
-      "assigned_to": 4
+      "assigned_to": 5,
+      "notes": "Morning pet care routine: 1) Feed cats 2) Fresh water 3) Clean litter box if needed",
+      "due_date": "2024-12-08T00:00:00.000Z",
+      "due_time": "07:00",
+      "created_at": "2024-12-07T00:00:00.000Z",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "priority": "HIGH",
+      "last_modified": {
+        "date": "2024-12-07T00:00:00.000Z",
+        "modified_by": 1
+      },
+      "repeat_end_date": "2025-12-31T00:00:00.000Z"
     },
     {
       "id": 6,
-      "name": "Vacuum Living Areas",
-      "location_id": 3,
-      "frequency_id": 2,
-      "assigned_to": 5
+      "name": "put turkey in oven",
+      "location_id": 1,
+      "frequency_id": 6,
+      "assigned_to": 1,
+      "due_date": "2024-12-07T15:38:53.857Z",
+      "due_time": "10:00",
+      "created_at": "2024-12-07T15:39:25.120Z"
     },
     {
       "id": 7,
-      "name": "Clean Bathroom",
-      "location_id": 2,
-      "frequency_id": 2,
-      "assigned_to": 4
+      "name": "asf",
+      "location_id": 1,
+      "frequency_id": 6,
+      "assigned_to": 1,
+      "due_date": "2024-12-07T15:55:25.648Z",
+      "due_time": "08:00",
+      "created_at": "2024-12-07T15:56:17.138Z"
     },
     {
       "id": 8,
-      "name": "Mop Kitchen Floor",
-      "location_id": 1,
-      "frequency_id": 2,
-      "assigned_to": 5
+      "name": "qwer",
+      "location_id": 2,
+      "frequency_id": 6,
+      "assigned_to": 3,
+      "due_date": "2024-12-07T16:06:09.446Z",
+      "due_time": "21:00",
+      "created_at": "2024-12-07T16:06:29.200Z"
     },
     {
       "id": 9,
-      "name": "Change Bed Linens",
+      "name": "Clean Bedroom",
       "location_id": 4,
-      "frequency_id": 2,
+      "frequency_id": 1,
       "assigned_to": 4,
-      "is_complete": true,
-      "last_completed": "2024-12-05T01:27:55.344Z",
-      "updated_at": "2024-12-05T01:27:55.357Z"
-    },
-    {
-      "id": 10,
-      "name": "Clean Windows",
-      "location_id": 7,
-      "frequency_id": 2,
-      "assigned_to": 1,
-      "is_complete": false,
-      "last_completed": null
-    },
-    {
-      "id": 11,
-      "name": "Clean Fridge",
-      "location_id": 1,
-      "frequency_id": 3,
-      "assigned_to": 2
-    },
-    {
-      "id": 12,
-      "name": "Clean Oven",
-      "location_id": 1,
-      "frequency_id": 3,
-      "assigned_to": 3
-    },
-    {
-      "id": 13,
-      "name": "Dust Ceiling Fans",
-      "location_id": 7,
-      "frequency_id": 3,
-      "assigned_to": 3
-    },
-    {
-      "id": 14,
-      "name": "Clean Baseboards",
-      "location_id": 7,
-      "frequency_id": 3,
-      "assigned_to": 3
-    },
-    {
-      "id": 15,
-      "name": "Replace Air Filters",
-      "location_id": 7,
-      "frequency_id": 3,
-      "assigned_to": 2
-    },
-    {
-      "id": 16,
-      "name": "Clean Gutters",
-      "location_id": 8,
-      "frequency_id": 4,
-      "assigned_to": 1,
-      "is_complete": false,
-      "last_completed": null
-    },
-    {
-      "id": 17,
-      "name": "Service HVAC",
-      "location_id": 7,
-      "frequency_id": 4,
-      "assigned_to": 1
-    },
-    {
-      "id": 18,
-      "name": "Deep Clean Garage",
-      "location_id": 7,
-      "frequency_id": 5,
-      "assigned_to": 4
-    },
-    {
-      "id": 19,
-      "name": "Pressure Wash House",
-      "location_id": 8,
-      "frequency_id": 5,
-      "assigned_to": 1
-    },
-    {
-      "id": 20,
-      "name": "Shampoo Carpets",
-      "location_id": 7,
-      "frequency_id": 5,
-      "assigned_to": 2
-    },
-    {
-      "id": 21,
-      "name": "Pick Up Trash",
-      "location_id": 7,
-      "frequency_id": 1,
-      "assigned_to": 1,
-      "is_complete": false,
-      "last_completed": null,
-      "updated_at": "2024-12-07T02:55:59.856Z",
-      "instances": []
-    },
-    {
-      "id": 22,
-      "name": "Vacuum Floors",
-      "location_id": 7,
-      "frequency_id": 1,
-      "assigned_to": 2
-    },
-    {
-      "id": 23,
-      "name": "Sweep Floors",
-      "location_id": 7,
-      "frequency_id": 1,
-      "assigned_to": 4
-    },
-    {
-      "id": 24,
-      "name": "Make Bed",
-      "location_id": 4,
-      "frequency_id": 1,
-      "assigned_to": 5
-    },
-    {
-      "id": 25,
-      "name": "Pick Up Dirty Clothes",
-      "location_id": 4,
-      "frequency_id": 1,
-      "assigned_to": 1,
-      "is_complete": true,
-      "last_completed": "2024-12-07T02:08:21.731Z",
-      "updated_at": "2024-12-07T02:08:21.745Z"
-    },
-    {
-      "id": 26,
-      "name": "Put Away Clean Clothes",
-      "location_id": 4,
-      "frequency_id": 1,
-      "assigned_to": 2
-    },
-    {
-      "id": 27,
-      "name": "Change Cat Litter",
-      "location_id": 7,
-      "frequency_id": 1,
-      "assigned_to": 3,
-      "is_complete": true,
-      "last_completed": "2024-12-05T02:29:19.136Z",
-      "updated_at": "2024-12-05T02:29:19.144Z"
-    },
-    {
-      "id": 28,
-      "name": "Check Mail",
-      "location_id": 8,
-      "frequency_id": 1,
-      "assigned_to": 5,
-      "is_complete": false,
-      "last_completed": null,
-      "updated_at": "2024-12-05T02:29:13.105Z"
-    },
-    {
-      "id": 29,
-      "name": "ygjhg",
-      "location_id": 3,
-      "frequency_id": 6,
-      "assigned_to": 1,
-      "due_date": "2024-12-07T02:56:16.971Z",
-      "due_time": "12:00",
-      "created_at": "2024-12-07T02:56:50.473Z"
+      "due_date": "2024-12-07T16:06:48.920Z",
+      "due_time": "21:00",
+      "created_at": "2024-12-07T16:08:10.183Z"
     }
   ],
   "chore_instances": [
     {
       "id": 1,
-      "chore_id": 29,
+      "chore_id": 1,
+      "due_date": "2024-12-14",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "skipped": false,
+      "modified_history": []
+    },
+    {
+      "id": 2,
+      "chore_id": 2,
+      "due_date": "2024-12-09",
+      "is_complete": true,
+      "completed_at": "2024-12-07T15:30:00.000Z",
+      "completed_by": 2,
+      "skipped": false,
+      "modified_history": []
+    },
+    {
+      "id": 3,
+      "chore_id": 3,
+      "due_date": "2024-12-08",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "skipped": false,
+      "modified_history": []
+    },
+    {
+      "id": 4,
+      "chore_id": 4,
+      "due_date": "2024-12-10",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "skipped": false,
+      "modified_history": []
+    },
+    {
+      "id": 5,
+      "chore_id": 5,
+      "due_date": "2024-12-08",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "skipped": false,
+      "modified_history": []
+    },
+    {
+      "id": 6,
+      "chore_id": 6,
       "due_date": "2024-12-07",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 7,
+      "chore_id": 7,
+      "due_date": "2024-12-07",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 8,
+      "chore_id": 8,
+      "due_date": "2024-12-07",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 9,
+      "chore_id": 9,
+      "due_date": "2024-12-07",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 10,
+      "chore_id": 9,
+      "due_date": "2024-12-08",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 11,
+      "chore_id": 9,
+      "due_date": "2024-12-09",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 12,
+      "chore_id": 9,
+      "due_date": "2024-12-10",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 13,
+      "chore_id": 9,
+      "due_date": "2024-12-11",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 14,
+      "chore_id": 9,
+      "due_date": "2024-12-12",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 15,
+      "chore_id": 9,
+      "due_date": "2024-12-13",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 16,
+      "chore_id": 9,
+      "due_date": "2024-12-14",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 17,
+      "chore_id": 9,
+      "due_date": "2024-12-15",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 18,
+      "chore_id": 9,
+      "due_date": "2024-12-16",
       "is_complete": false,
       "completed_at": null,
       "completed_by": null
