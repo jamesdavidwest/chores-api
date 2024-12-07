@@ -7,7 +7,7 @@ const router = express.Router();
 
 // Helper function to read database
 async function readDatabase() {
-    const dbPath = path.join(__dirname, '../data/database.json');
+    const dbPath = path.join(__dirname, '../../data/database.json');
     try {
         const data = await fs.readFile(dbPath, 'utf8');
         return JSON.parse(data);
@@ -20,7 +20,12 @@ async function readDatabase() {
 // Login
 router.post("/login", async (req, res) => {
     try {
+        console.log('Login attempt:', req.body);
         const { username, password } = req.body;
+
+        if (!username || !password) {
+            return res.status(400).json({ error: "Username and password are required" });
+        }
 
         // Read the database file
         const db = await readDatabase();
@@ -38,9 +43,11 @@ router.post("/login", async (req, res) => {
         // Create and sign JWT
         const token = jwt.sign(
             { id: user.id, role: user.role }, 
-            process.env.JWT_SECRET || 'your-secret-key', // Fallback secret for development
+            process.env.JWT_SECRET || 'your-secret-key',
             { expiresIn: "24h" }
         );
+
+        console.log('Login successful for user:', { id: user.id, name: user.name, role: user.role });
 
         // Return user info and token
         res.json({ 

@@ -7,21 +7,35 @@ const {
   getChoreById,
   createChore,
   updateChore,
-  deleteChore
+  deleteChore,
+  getChoreInstances,
+  updateChoreInstance
 } = require('../utils/dataAccess');
 
 // Get all chores (filtered by user if not admin/manager)
 router.get('/', authenticate, async (req, res, next) => {
   try {
-    const allChores = await getChores();
-    if (['ADMIN', 'MANAGER'].includes(req.user.role)) {
-      res.json(allChores);
-    } else {
-      const userChores = allChores.filter(chore => chore.assigned_to === req.user.id);
-      res.json(userChores);
+    console.log('GET /chores - User:', req.user);
+    
+    const allChores = await getChores({ includeInstances: true });
+    console.log('GET /chores - All chores:', allChores);
+
+    if (!allChores) {
+      return res.json([]);
     }
+
+    let chores;
+    if (['ADMIN', 'MANAGER'].includes(req.user.role)) {
+      chores = allChores;
+    } else {
+      chores = allChores.filter(chore => chore.assigned_to === req.user.id);
+    }
+
+    console.log('GET /chores - Filtered chores:', chores);
+    res.json(chores || []);
   } catch (error) {
-    next(error);
+    console.error('GET /chores - Error:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 
@@ -33,41 +47,84 @@ router.get('/:id', authenticate, async (req, res, next) => {
       return res.status(404).json({ error: 'Chore not found' });
     }
     
-    // Check if user has access to this chore
     if (!['ADMIN', 'MANAGER'].includes(req.user.role) && 
         chore.assigned_to !== req.user.id) {
       return res.status(403).json({ error: 'Forbidden' });
     }
     
-    res.json(chore);
+    // Get instances for this chore
+    const instances = await getChoreInstances({ choreId: chore.id });
+    const responseChore = {
+      ...chore,
+      instances
+    };
+    
+    res.json(responseChore);
   } catch (error) {
-    next(error);
+    console.error('GET /chores/:id - Error:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 
 // Create new chore (admin/manager only)
 router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
   try {
-    const { due_date, due_time = DEFAULT_DUE_TIME, ...choreData } = req.body;
+    console.log('POST /chores - Request body:', JSON.stringify(req.body, null, 2));
 
-    // If no due_date provided, default to today at DEFAULT_DUE_TIME
-    if (!due_date) {
-      const today = new Date();
-      choreData.due_date = today.toISOString().split('T')[0];
-      choreData.due_time = DEFAULT_DUE_TIME;
-    } else {
-      choreData.due_date = due_date;
-      choreData.due_time = due_time;
-    }
+    const choreData = {
+      ...req.body,
+      due_time: req.body.due_time || DEFAULT_DUE_TIME
+    };
+
+    console.log('POST /chores - Processed choreData:', JSON.stringify(choreData, null, 2));
 
     const newChore = await createChore(choreData);
-    res.status(201).json(newChore);
+    console.log('POST /chores - Created chore:', JSON.stringify(newChore, null, 2));
+    
+    // Get instances that were created
+    const instances = await getChoreInstances({ choreId: newChore.id });
+    const responseChore = {
+      ...newChore,
+      instances
+    };
+    
+    res.status(201).json(responseChore);
   } catch (error) {
-    if (error.message.includes('due date')) {
-      res.status(400).json({ error: error.message });
-    } else {
-      next(error);
+    console.error('POST /chores - Error:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// Update chore instance completion status
+router.put('/:id/instances/:instanceId', authenticate, async (req, res, next) => {
+  try {
+    const chore = await getChoreById(req.params.id);
+    if (!chore) {
+      return res.status(404).json({ error: 'Chore not found' });
     }
+
+    if (!['ADMIN', 'MANAGER'].includes(req.user.role)) {
+      if (chore.assigned_to !== req.user.id) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+    }
+
+    const { is_complete } = req.body;
+    const updates = {
+      is_complete,
+      completed_at: is_complete ? new Date().toISOString() : null,
+      completed_by: is_complete ? req.user.id : null
+    };
+
+    const updatedInstance = await updateChoreInstance(req.params.instanceId, updates);
+    if (!updatedInstance) {
+      return res.status(404).json({ error: 'Chore instance not found' });
+    }
+
+    res.json(updatedInstance);
+  } catch (error) {
+    console.error('PUT /chores/:id/instances/:instanceId - Error:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 
@@ -79,29 +136,23 @@ router.put('/:id', authenticate, async (req, res, next) => {
       return res.status(404).json({ error: 'Chore not found' });
     }
 
-    // Only allow admin/manager to update all fields
-    // Regular users can only toggle completion
     if (!['ADMIN', 'MANAGER'].includes(req.user.role)) {
-      if (chore.assigned_to !== req.user.id) {
-        return res.status(403).json({ error: 'Forbidden' });
-      }
-      // Only allow updating is_complete and last_completed
-      const { is_complete } = req.body;
-      const updatedChore = await updateChore(req.params.id, { 
-        is_complete,
-        last_completed: is_complete ? new Date().toISOString() : null
-      });
-      return res.json(updatedChore);
+      return res.status(403).json({ error: 'Forbidden - Only admins and managers can update chores' });
     }
 
     const updatedChore = await updateChore(req.params.id, req.body);
-    res.json(updatedChore);
+    
+    // Get updated instances
+    const instances = await getChoreInstances({ choreId: updatedChore.id });
+    const responseChore = {
+      ...updatedChore,
+      instances
+    };
+
+    res.json(responseChore);
   } catch (error) {
-    if (error.message.includes('due date')) {
-      res.status(400).json({ error: error.message });
-    } else {
-      next(error);
-    }
+    console.error('PUT /chores/:id - Error:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 
@@ -114,7 +165,8 @@ router.delete('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), async (req,
     }
     res.status(204).send();
   } catch (error) {
-    next(error);
+    console.error('DELETE /chores/:id - Error:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 

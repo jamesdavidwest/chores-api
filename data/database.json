@@ -244,8 +244,10 @@
       "location_id": 7,
       "frequency_id": 1,
       "assigned_to": 1,
-      "is_complete": true,
-      "last_completed": "2024-12-05T21:06:52.967Z"
+      "is_complete": false,
+      "last_completed": null,
+      "updated_at": "2024-12-07T02:55:59.856Z",
+      "instances": []
     },
     {
       "id": 22,
@@ -274,8 +276,9 @@
       "location_id": 4,
       "frequency_id": 1,
       "assigned_to": 1,
-      "is_complete": false,
-      "last_completed": null
+      "is_complete": true,
+      "last_completed": "2024-12-07T02:08:21.731Z",
+      "updated_at": "2024-12-07T02:08:21.745Z"
     },
     {
       "id": 26,
@@ -303,6 +306,26 @@
       "is_complete": false,
       "last_completed": null,
       "updated_at": "2024-12-05T02:29:13.105Z"
+    },
+    {
+      "id": 29,
+      "name": "ygjhg",
+      "location_id": 3,
+      "frequency_id": 6,
+      "assigned_to": 1,
+      "due_date": "2024-12-07T02:56:16.971Z",
+      "due_time": "12:00",
+      "created_at": "2024-12-07T02:56:50.473Z"
+    }
+  ],
+  "chore_instances": [
+    {
+      "id": 1,
+      "chore_id": 29,
+      "due_date": "2024-12-07",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
     }
   ]
 }
