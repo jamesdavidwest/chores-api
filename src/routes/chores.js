@@ -18,7 +18,14 @@ router.get('/', authenticate, async (req, res, next) => {
     console.log('GET /chores - User:', req.user);
     console.log('GET /chores - Query:', req.query);
     
-    const allChores = await getChores({ includeInstances: true });
+    const { startDate, endDate, userId } = req.query;
+    
+    const allChores = await getChores({ 
+      includeInstances: true,
+      startDate,
+      endDate,
+      userId: userId === 'null' ? null : userId
+    });
     console.log('GET /chores - All chores:', allChores);
 
     if (!allChores) {
@@ -28,8 +35,8 @@ router.get('/', authenticate, async (req, res, next) => {
     let chores;
     if (['ADMIN', 'MANAGER'].includes(req.user.role)) {
       // If userId is provided in query and user is admin/manager, filter by that
-      if (req.query.userId) {
-        const filterUserId = parseInt(req.query.userId, 10);
+      if (userId && userId !== 'null') {
+        const filterUserId = parseInt(userId, 10);
         chores = allChores.filter(chore => chore.assigned_to === filterUserId);
       } else {
         chores = allChores;
