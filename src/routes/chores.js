@@ -16,6 +16,7 @@ const {
 router.get('/', authenticate, async (req, res, next) => {
   try {
     console.log('GET /chores - User:', req.user);
+    console.log('GET /chores - Query:', req.query);
     
     const allChores = await getChores({ includeInstances: true });
     console.log('GET /chores - All chores:', allChores);
@@ -26,8 +27,15 @@ router.get('/', authenticate, async (req, res, next) => {
 
     let chores;
     if (['ADMIN', 'MANAGER'].includes(req.user.role)) {
-      chores = allChores;
+      // If userId is provided in query and user is admin/manager, filter by that
+      if (req.query.userId) {
+        const filterUserId = parseInt(req.query.userId, 10);
+        chores = allChores.filter(chore => chore.assigned_to === filterUserId);
+      } else {
+        chores = allChores;
+      }
     } else {
+      // Regular users can only see their own chores
       chores = allChores.filter(chore => chore.assigned_to === req.user.id);
     }
 
@@ -39,34 +47,33 @@ router.get('/', authenticate, async (req, res, next) => {
   }
 });
 
-// Get single chore
+// Get a specific chore
 router.get('/:id', authenticate, async (req, res, next) => {
   try {
     const chore = await getChoreById(req.params.id);
     if (!chore) {
       return res.status(404).json({ error: 'Chore not found' });
     }
-    
+
     if (!['ADMIN', 'MANAGER'].includes(req.user.role) && 
         chore.assigned_to !== req.user.id) {
       return res.status(403).json({ error: 'Forbidden' });
     }
-    
+
     // Get instances for this chore
     const instances = await getChoreInstances({ choreId: chore.id });
     const responseChore = {
       ...chore,
       instances
     };
-    
+
     res.json(responseChore);
   } catch (error) {
-    console.error('GET /chores/:id - Error:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    next(error);
   }
 });
 
-// Create new chore (admin/manager only)
+// Create a new chore
 router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
   try {
     console.log('POST /chores - Request body:', JSON.stringify(req.body, null, 2));
@@ -90,12 +97,11 @@ router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res,
     
     res.status(201).json(responseChore);
   } catch (error) {
-    console.error('POST /chores - Error:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    next(error);
   }
 });
 
-// Update chore instance completion status
+// Update a chore instance's completion status
 router.put('/:id/instances/:instanceId', authenticate, async (req, res, next) => {
   try {
     const chore = await getChoreById(req.params.id);
@@ -123,12 +129,11 @@ router.put('/:id/instances/:instanceId', authenticate, async (req, res, next) =>
 
     res.json(updatedInstance);
   } catch (error) {
-    console.error('PUT /chores/:id/instances/:instanceId - Error:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    next(error);
   }
 });
 
-// Update chore
+// Update a chore
 router.put('/:id', authenticate, async (req, res, next) => {
   try {
     const chore = await getChoreById(req.params.id);
@@ -151,12 +156,11 @@ router.put('/:id', authenticate, async (req, res, next) => {
 
     res.json(responseChore);
   } catch (error) {
-    console.error('PUT /chores/:id - Error:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    next(error);
   }
 });
 
-// Delete chore (admin/manager only)
+// Delete a chore
 router.delete('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
   try {
     const success = await deleteChore(req.params.id);
@@ -165,8 +169,7 @@ router.delete('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), async (req,
     }
     res.status(204).send();
   } catch (error) {
-    console.error('DELETE /chores/:id - Error:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    next(error);
   }
 });
 

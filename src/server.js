@@ -5,12 +5,13 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
 
+// Import routes
 const choreRoutes = require('./routes/chores');
 const authRoutes = require('./routes/auth');
 const locationRoutes = require('./routes/locations');
 const userRoutes = require('./routes/users');
 const calendarRoutes = require('./routes/calendar');
-const { errorHandler } = require('./middleware/errorHandler');
+const errorHandler = require('./middleware/errorHandler');
 
 // Verify database exists
 const DB_PATH = path.join(__dirname, '../data/database.json');
@@ -19,6 +20,7 @@ if (!fs.existsSync(DB_PATH)) {
     process.exit(1);
 }
 
+// Create Express app
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -52,9 +54,9 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Routes
-app.use('/api/chores', choreRoutes);
+// API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/chores', choreRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/calendar', calendarRoutes);
@@ -72,22 +74,15 @@ app.use((err, req, res, next) => {
 
 app.use(errorHandler);
 
-// Server
-let server;
+// Start server
 if (process.env.NODE_ENV !== 'test') {
-    server = app.listen(PORT, '0.0.0.0', () => {
+    app.listen(PORT, '0.0.0.0', () => {
         console.log(`Server starting...`);
         console.log(`Current working directory: ${process.cwd()}`);
         console.log(`Database path: ${DB_PATH}`);
         console.log(`Server running on port ${PORT}`);
         console.log(`Try accessing: http://localhost:${PORT}/health`);
     });
-
-    // Handle server errors
-    server.on('error', (error) => {
-        console.error('Server error:', error);
-        process.exit(1);
-    });
 }
 
-module.exports = { app, server };
+module.exports = app;

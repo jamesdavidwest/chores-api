@@ -1,5 +1,3 @@
-// src/middleware/errorHandler.js
-
 // Error handling middleware
 const errorHandler = (err, req, res, next) => {
   // Log error for debugging
@@ -20,4 +18,4 @@ const errorHandler = (err, req, res, next) => {
   });
 };
 
-module.exports = { errorHandler };
+module.exports = errorHandler;

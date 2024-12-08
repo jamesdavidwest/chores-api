@@ -231,6 +231,101 @@
       "due_date": "2024-12-07T16:06:48.920Z",
       "due_time": "21:00",
       "created_at": "2024-12-07T16:08:10.183Z"
+    },
+    {
+      "id": 10,
+      "name": "qscdewazxsdfgt",
+      "location_id": 1,
+      "frequency_id": 1,
+      "assigned_to": 1,
+      "due_date": "2024-12-08",
+      "due_time": "21:00",
+      "created_at": "2024-12-08T03:32:55.885Z",
+      "instances": [
+        {
+          "id": 19,
+          "chore_id": 10,
+          "due_date": "2024-12-08",
+          "is_complete": false,
+          "completed_at": null,
+          "completed_by": null
+        },
+        {
+          "id": 20,
+          "chore_id": 10,
+          "due_date": "2024-12-09",
+          "is_complete": false,
+          "completed_at": null,
+          "completed_by": null
+        },
+        {
+          "id": 21,
+          "chore_id": 10,
+          "due_date": "2024-12-10",
+          "is_complete": false,
+          "completed_at": null,
+          "completed_by": null
+        },
+        {
+          "id": 22,
+          "chore_id": 10,
+          "due_date": "2024-12-11",
+          "is_complete": false,
+          "completed_at": null,
+          "completed_by": null
+        },
+        {
+          "id": 23,
+          "chore_id": 10,
+          "due_date": "2024-12-12",
+          "is_complete": false,
+          "completed_at": null,
+          "completed_by": null
+        },
+        {
+          "id": 24,
+          "chore_id": 10,
+          "due_date": "2024-12-13",
+          "is_complete": false,
+          "completed_at": null,
+          "completed_by": null
+        },
+        {
+          "id": 25,
+          "chore_id": 10,
+          "due_date": "2024-12-14",
+          "is_complete": false,
+          "completed_at": null,
+          "completed_by": null
+        },
+        {
+          "id": 26,
+          "chore_id": 10,
+          "due_date": "2024-12-15",
+          "is_complete": false,
+          "completed_at": null,
+          "completed_by": null
+        },
+        {
+          "id": 27,
+          "chore_id": 10,
+          "due_date": "2024-12-16",
+          "is_complete": false,
+          "completed_at": null,
+          "completed_by": null
+        },
+        {
+          "id": 28,
+          "chore_id": 10,
+          "due_date": "2024-12-17",
+          "is_complete": false,
+          "completed_at": null,
+          "completed_by": null
+        }
+      ],
+      "is_complete": false,
+      "last_completed": null,
+      "updated_at": "2024-12-08T03:41:10.624Z"
     }
   ],
   "chore_instances": [
@@ -384,6 +479,86 @@
       "id": 18,
       "chore_id": 9,
       "due_date": "2024-12-16",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 19,
+      "chore_id": 10,
+      "due_date": "2024-12-08",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 20,
+      "chore_id": 10,
+      "due_date": "2024-12-09",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 21,
+      "chore_id": 10,
+      "due_date": "2024-12-10",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 22,
+      "chore_id": 10,
+      "due_date": "2024-12-11",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 23,
+      "chore_id": 10,
+      "due_date": "2024-12-12",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 24,
+      "chore_id": 10,
+      "due_date": "2024-12-13",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 25,
+      "chore_id": 10,
+      "due_date": "2024-12-14",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 26,
+      "chore_id": 10,
+      "due_date": "2024-12-15",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 27,
+      "chore_id": 10,
+      "due_date": "2024-12-16",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null
+    },
+    {
+      "id": 28,
+      "chore_id": 10,
+      "due_date": "2024-12-17",
       "is_complete": false,
       "completed_at": null,
       "completed_by": null

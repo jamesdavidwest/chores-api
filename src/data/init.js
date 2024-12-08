@@ -1,65 +1,62 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs').promises;
 
-const dbPath = path.resolve(__dirname, 'chores.sqlite');
-const db = new sqlite3.Database(dbPath);
+async function runMigration(db, sqlFile) {
+    const sql = await fs.readFile(sqlFile, 'utf8');
+    return new Promise((resolve, reject) => {
+        db.exec(sql, (err) => {
+            if (err) {
+                console.error(`Error running migration ${sqlFile}:`, err);
+                reject(err);
+                return;
+            }
+            console.log(`Successfully ran migration: ${sqlFile}`);
+            resolve();
+        });
+    });
+}
 
-const initializeDatabase = () => {
-  db.serialize(() => {
-    // Users table
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      role TEXT CHECK(role IN ('ADMIN', 'MANAGER', 'USER')) NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`);
+const initializeDatabase = async () => {
+    try {
+        const db = new sqlite3.Database(path.join(__dirname, '../../data/chores.db'));
+        
+        // List of migration files in order
+        const migrations = [
+            path.join(__dirname, '../migrations/004_add_instances_tables.sql')
+        ];
 
-    // Categories table
-    db.run(`CREATE TABLE IF NOT EXISTS categories (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      description TEXT
-    )`);
+        // Run migrations sequentially
+        for (const migration of migrations) {
+            await runMigration(db, migration);
+        }
 
-    // Chores table
-    db.run(`CREATE TABLE IF NOT EXISTS chores (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      category_id INTEGER,
-      frequency TEXT NOT NULL,
-      description TEXT,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(category_id) REFERENCES categories(id)
-    )`);
+        // Backup the database.json if it exists
+        const jsonPath = path.join(__dirname, '../../data/database.json');
+        const backupPath = path.join(__dirname, '../../data/database.json.bak');
+        
+        try {
+            await fs.access(jsonPath);
+            await fs.copyFile(jsonPath, backupPath);
+            console.log('Successfully backed up database.json');
+        } catch (error) {
+            console.log('No database.json found to backup');
+        }
 
-    // Chore assignments table
-    db.run(`CREATE TABLE IF NOT EXISTS chore_assignments (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      chore_id INTEGER NOT NULL,
-      assigned_to INTEGER NOT NULL,
-      assigned_by INTEGER NOT NULL,
-      assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      is_complete BOOLEAN DEFAULT FALSE,
-      last_completed TIMESTAMP,
-      due_date TIMESTAMP,
-      FOREIGN KEY(chore_id) REFERENCES chores(id),
-      FOREIGN KEY(assigned_to) REFERENCES users(id),
-      FOREIGN KEY(assigned_by) REFERENCES users(id)
-    )`);
-
-    // Chore history table
-    db.run(`CREATE TABLE IF NOT EXISTS chore_history (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      chore_id INTEGER NOT NULL,
-      completed_by INTEGER NOT NULL,
-      completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      notes TEXT,
-      FOREIGN KEY(chore_id) REFERENCES chores(id),
-      FOREIGN KEY(completed_by) REFERENCES users(id)
-    )`);
-  });
+        console.log('Database initialized successfully');
+        
+        // Close the database connection
+        db.close((err) => {
+            if (err) {
+                console.error('Error closing database:', err);
+            } else {
+                console.log('Database connection closed');
+            }
+        });
+    } catch (error) {
+        console.error('Error initializing database:', error);
+        throw error;
+    }
 };
 
-module.exports = { db, initializeDatabase };
+module.exports = { initializeDatabase };

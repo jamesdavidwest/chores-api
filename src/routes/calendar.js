@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const { authenticate } = require('../middleware/auth');
 const calendarService = require('../services/calendarService');
 
 // Get chores for calendar view
-router.get('/events', async (req, res) => {
+router.get('/events', authenticate, async (req, res) => {
     try {
         const { start, end } = req.query;
         if (!start || !end) {
@@ -23,7 +24,7 @@ router.get('/events', async (req, res) => {
 });
 
 // Mark chore as completed
-router.post('/complete/:id', async (req, res) => {
+router.post('/complete/:id', authenticate, async (req, res) => {
     try {
         const choreId = parseInt(req.params.id);
         const userId = req.body.userId; // Assuming you're passing the user ID in the request body
@@ -45,7 +46,7 @@ router.post('/complete/:id', async (req, res) => {
 });
 
 // Update chore schedule
-router.patch('/reschedule/:id', async (req, res) => {
+router.patch('/reschedule/:id', authenticate, async (req, res) => {
     try {
         const choreId = parseInt(req.params.id);
         const { date, time } = req.body;

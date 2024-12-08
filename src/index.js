@@ -5,7 +5,8 @@ const { initializeDatabase } = require("./data/init");
 const authRoutes = require("./routes/auth");
 const choresRoutes = require("./routes/chores");
 const locationsRoutes = require("./routes/locations");
-const usersRoutes = require("./routes/users"); // Added
+const usersRoutes = require("./routes/users");
+const calendarRoutes = require("./routes/calendar"); // Added
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -36,7 +37,8 @@ app.use((err, req, res, next) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/chores", choresRoutes);
 app.use("/api/locations", locationsRoutes);
-app.use("/api/users", usersRoutes); // Added
+app.use("/api/users", usersRoutes);
+app.use("/api/calendar", calendarRoutes); // Added
 
 // Initialize database
 initializeDatabase();
