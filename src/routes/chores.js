@@ -50,7 +50,7 @@ router.get('/', authenticate, async (req, res, next) => {
     res.json(chores || []);
   } catch (error) {
     console.error('GET /chores - Error:', error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    next(error);
   }
 });
 
@@ -111,6 +111,12 @@ router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res,
 // Update a chore instance's completion status
 router.put('/:id/instances/:instanceId', authenticate, async (req, res, next) => {
   try {
+    console.log('PUT /chores/:id/instances/:instanceId - Request:', {
+      choreId: req.params.id,
+      instanceId: req.params.instanceId,
+      body: req.body
+    });
+
     const chore = await getChoreById(req.params.id);
     if (!chore) {
       return res.status(404).json({ error: 'Chore not found' });
@@ -129,13 +135,17 @@ router.put('/:id/instances/:instanceId', authenticate, async (req, res, next) =>
       completed_by: is_complete ? req.user.id : null
     };
 
+    console.log('Updating instance with:', updates);
+
     const updatedInstance = await updateChoreInstance(req.params.instanceId, updates);
     if (!updatedInstance) {
       return res.status(404).json({ error: 'Chore instance not found' });
     }
 
+    console.log('Instance updated successfully:', updatedInstance);
     res.json(updatedInstance);
   } catch (error) {
+    console.error('Error updating instance:', error);
     next(error);
   }
 });

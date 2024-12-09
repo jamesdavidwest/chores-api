@@ -61,17 +61,7 @@ app.use('/api/locations', locationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/calendar', calendarRoutes);
 
-// Error handling
-app.use((err, req, res, next) => {
-    console.error('Global error handler:', {
-        url: req.url,
-        method: req.method,
-        error: err.message,
-        stack: err.stack
-    });
-    next(err);
-});
-
+// Error handling middleware - now just one handler
 app.use(errorHandler);
 
 // Start server
