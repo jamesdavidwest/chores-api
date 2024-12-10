@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const CategoryService = require('../services/CategoryService');
 const { authenticate, authorize } = require('../middleware/auth');
+const { validateCreateCategory, validateUpdateCategory } = require('../middleware/validation/categoryValidator');
 
 const categoryService = new CategoryService();
 
@@ -39,9 +40,9 @@ router.get('/:id', authenticate, async (req, res, next) => {
 });
 
 // Create new category (admin/manager only)
-router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
+router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), validateCreateCategory, async (req, res, next) => {
     try {
-        const newCategory = await categoryService.createCategory(req.body);
+        const newCategory = await categoryService.createCategory(req.validatedData);
         res.status(201).json(newCategory);
     } catch (error) {
         next(error);
@@ -49,9 +50,9 @@ router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res,
 });
 
 // Update category (admin/manager only)
-router.put('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
+router.put('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), validateUpdateCategory, async (req, res, next) => {
     try {
-        const updatedCategory = await categoryService.updateCategory(req.params.id, req.body);
+        const updatedCategory = await categoryService.updateCategory(req.params.id, req.validatedData);
         if (!updatedCategory) {
             return res.status(404).json({ error: 'Category not found' });
         }

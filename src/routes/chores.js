@@ -4,6 +4,7 @@ const TaskService = require('../services/TaskService');
 const CalendarService = require('../services/CalendarService');
 const NotificationService = require('../services/NotificationService');
 const { authenticate, authorize } = require('../middleware/auth');
+const { validateCreateTask, validateUpdateTask, validateCompleteTask } = require('../middleware/validation/taskValidator');
 
 const taskService = new TaskService();
 const calendarService = new CalendarService();
@@ -53,14 +54,14 @@ router.get('/:id', authenticate, async (req, res, next) => {
 });
 
 // Create a new task
-router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
+router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), validateCreateTask, async (req, res, next) => {
     try {
-        const newTask = await taskService.createTask(req.body);
+        const newTask = await taskService.createTask(req.validatedData);
         
         // Generate instances if frequency is set
         if (newTask.frequency_id) {
             const startDate = new Date().toISOString().split('T')[0];
-            const endDate = req.body.end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            const endDate = req.validatedData.end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             await calendarService.generateInstances(newTask.id, startDate, endDate);
         }
 
@@ -74,7 +75,7 @@ router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res,
 });
 
 // Update a task instance's completion status
-router.put('/:id/instances/:instanceId', authenticate, async (req, res, next) => {
+router.put('/:id/instances/:instanceId', authenticate, validateCompleteTask, async (req, res, next) => {
     try {
         const task = await taskService.getTaskById(req.params.id);
         if (!task) {
@@ -87,9 +88,9 @@ router.put('/:id/instances/:instanceId', authenticate, async (req, res, next) =>
         }
 
         const updates = {
-            ...req.body,
-            completed_at: req.body.is_complete ? new Date().toISOString() : null,
-            completed_by: req.body.is_complete ? req.user.id : null
+            ...req.validatedData,
+            completed_at: req.validatedData.is_complete ? new Date().toISOString() : null,
+            completed_by: req.validatedData.is_complete ? req.user.id : null
         };
 
         const updatedInstance = await taskService.updateInstance(req.params.instanceId, updates);
@@ -109,14 +110,14 @@ router.put('/:id/instances/:instanceId', authenticate, async (req, res, next) =>
 });
 
 // Update a task
-router.put('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
+router.put('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), validateUpdateTask, async (req, res, next) => {
     try {
-        const updatedTask = await taskService.updateTask(req.params.id, req.body);
+        const updatedTask = await taskService.updateTask(req.params.id, req.validatedData);
         if (!updatedTask) {
             return res.status(404).json({ error: 'Task not found' });
         }
 
-        if (req.body.frequency_id) {
+        if (req.validatedData.frequency_id) {
             // Regenerate future instances if frequency changed
             const startDate = new Date().toISOString().split('T')[0];
             const endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];

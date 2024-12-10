@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const LocationService = require('../services/LocationService');
 const { authenticate, authorize } = require('../middleware/auth');
+const { validateCreateLocation, validateUpdateLocation } = require('../middleware/validation/locationValidator');
+const { validateLocationSupplies } = require('../middleware/validation/suppliesValidator');
 
 const locationService = new LocationService();
 
@@ -39,9 +41,9 @@ router.get('/:id', authenticate, async (req, res, next) => {
 });
 
 // Create new location (admin/manager only)
-router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
+router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), validateCreateLocation, async (req, res, next) => {
     try {
-        const newLocation = await locationService.createLocation(req.body);
+        const newLocation = await locationService.createLocation(req.validatedData);
         res.status(201).json(newLocation);
     } catch (error) {
         next(error);
@@ -49,9 +51,9 @@ router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res,
 });
 
 // Update location (admin/manager only)
-router.put('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
+router.put('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), validateUpdateLocation, async (req, res, next) => {
     try {
-        const updatedLocation = await locationService.updateLocation(req.params.id, req.body);
+        const updatedLocation = await locationService.updateLocation(req.params.id, req.validatedData);
         if (!updatedLocation) {
             return res.status(404).json({ error: 'Location not found' });
         }
@@ -85,13 +87,21 @@ router.get('/:id/supplies', authenticate, async (req, res, next) => {
 });
 
 // Update location supplies (admin/manager only)
-router.put('/:id/supplies', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
-    try {
-        const updatedSupplies = await locationService.updateLocationSupplies(req.params.id, req.body);
-        res.json(updatedSupplies);
-    } catch (error) {
-        next(error);
+router.put('/:id/supplies', 
+    authenticate, 
+    authorize(['ADMIN', 'MANAGER']), 
+    validateLocationSupplies,
+    async (req, res, next) => {
+        try {
+            const updatedSupplies = await locationService.updateLocationSupplies(
+                req.params.id, 
+                req.validatedData
+            );
+            res.json(updatedSupplies);
+        } catch (error) {
+            next(error);
+        }
     }
-});
+);
 
 module.exports = router;

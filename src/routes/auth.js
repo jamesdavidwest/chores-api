@@ -3,17 +3,14 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const UserService = require('../services/UserService');
 const { authenticate } = require('../middleware/auth');
+const { validateLogin, validateProfileUpdate } = require('../middleware/validation/userValidator');
 
 const userService = new UserService();
 
-// Login route
-router.post('/login', async (req, res, next) => {
+// Login route with validation
+router.post('/login', validateLogin, async (req, res, next) => {
     try {
-        const { email, password } = req.body;
-
-        if (!email || !password) {
-            return res.status(400).json({ error: 'Email and password are required' });
-        }
+        const { email, password } = req.validatedData;
 
         const user = await userService.validateCredentials(email, password);
         if (!user) {
@@ -49,10 +46,10 @@ router.get('/profile', authenticate, async (req, res, next) => {
     }
 });
 
-// Update user profile
-router.put('/profile', authenticate, async (req, res, next) => {
+// Update user profile with validation
+router.put('/profile', authenticate, validateProfileUpdate, async (req, res, next) => {
     try {
-        const updatedUser = await userService.updateUser(req.user.id, req.body);
+        const updatedUser = await userService.updateUser(req.user.id, req.validatedData);
         if (!updatedUser) {
             return res.status(404).json({ error: 'User not found' });
         }

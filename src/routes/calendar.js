@@ -2,15 +2,20 @@ const express = require('express');
 const router = express.Router();
 const CalendarService = require('../services/CalendarService');
 const NotificationService = require('../services/NotificationService');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, authorize } = require('../middleware/auth');
+const { 
+    validateDateRange,
+    validateEventUpdate,
+    validateInstanceGeneration 
+} = require('../middleware/validation/calendarValidator');
 
 const calendarService = new CalendarService();
 const notificationService = new NotificationService();
 
 // Get calendar events
-router.get('/events', authenticate, async (req, res, next) => {
+router.get('/events', authenticate, validateDateRange, async (req, res, next) => {
     try {
-        const { startDate, endDate, userId, categoryId, locationId, status } = req.query;
+        const { startDate, endDate, userId, categoryId, locationId, status } = req.validatedData;
         
         let options = {
             startDate,
@@ -69,9 +74,9 @@ router.get('/upcoming', authenticate, async (req, res, next) => {
 });
 
 // Move task instance to new date/time
-router.put('/events/:instanceId/move', authenticate, async (req, res, next) => {
+router.put('/events/:instanceId/move', authenticate, validateEventUpdate, async (req, res, next) => {
     try {
-        const { date, time } = req.body;
+        const { due_date: date, due_time: time } = req.validatedData;
         
         // Check for conflicts
         const conflicts = await calendarService.getTaskConflicts(date, time, req.user.id);
@@ -97,14 +102,9 @@ router.put('/events/:instanceId/move', authenticate, async (req, res, next) => {
 });
 
 // Generate instances for date range
-router.post('/generate-instances', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
+router.post('/generate-instances', authenticate, authorize(['ADMIN', 'MANAGER']), validateInstanceGeneration, async (req, res, next) => {
     try {
-        const { taskId, startDate, endDate } = req.body;
-        
-        if (!taskId || !startDate || !endDate) {
-            return res.status(400).json({ error: 'taskId, startDate, and endDate are required' });
-        }
-
+        const { task_id: taskId, start_date: startDate, end_date: endDate } = req.validatedData;
         const instances = await calendarService.generateInstances(taskId, startDate, endDate);
         res.json(instances);
     } catch (error) {
