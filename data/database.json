@@ -89,211 +89,69 @@
   ],
   "chores": [
     {
-      "id": 1,
-      "name": "Dishes",
-      "location_id": 1,
-      "frequency_id": 1,
-      "assigned_to": 4
-    },
-    {
-      "id": 2,
-      "name": "Wipe Kitchen Counters",
-      "location_id": 1,
-      "frequency_id": 1,
-      "assigned_to": 5
-    },
-    {
-      "id": 3,
-      "name": "Clean Dining Table",
-      "location_id": 1,
-      "frequency_id": 1,
-      "assigned_to": 4
-    },
-    {
-      "id": 4,
-      "name": "Take Out Trash",
-      "location_id": 7,
-      "frequency_id": 1,
-      "assigned_to": 5
-    },
-    {
-      "id": 5,
-      "name": "Feed Pets",
-      "location_id": 7,
-      "frequency_id": 1,
-      "assigned_to": 4
-    },
-    {
-      "id": 6,
-      "name": "Vacuum Living Areas",
-      "location_id": 3,
-      "frequency_id": 2,
-      "assigned_to": 5
-    },
-    {
-      "id": 7,
-      "name": "Clean Bathroom",
-      "location_id": 2,
-      "frequency_id": 2,
-      "assigned_to": 4
-    },
-    {
-      "id": 8,
-      "name": "Mop Kitchen Floor",
-      "location_id": 1,
-      "frequency_id": 2,
-      "assigned_to": 5
-    },
-    {
-      "id": 9,
-      "name": "Change Bed Linens",
-      "location_id": 4,
-      "frequency_id": 2,
-      "assigned_to": 4
-    },
-    {
-      "id": 10,
-      "name": "Clean Windows",
-      "location_id": 7,
-      "frequency_id": 2,
-      "assigned_to": 1
-    },
-    {
-      "id": 11,
-      "name": "Clean Fridge",
-      "location_id": 1,
-      "frequency_id": 3,
-      "assigned_to": 2
-    },
-    {
-      "id": 12,
-      "name": "Clean Oven",
-      "location_id": 1,
-      "frequency_id": 3,
-      "assigned_to": 3
-    },
-    {
-      "id": 13,
-      "name": "Dust Ceiling Fans",
-      "location_id": 7,
-      "frequency_id": 3,
-      "assigned_to": 3
-    },
-    {
-      "id": 14,
-      "name": "Clean Baseboards",
-      "location_id": 7,
-      "frequency_id": 3,
-      "assigned_to": 3
-    },
-    {
-      "id": 15,
-      "name": "Replace Air Filters",
-      "location_id": 7,
-      "frequency_id": 3,
-      "assigned_to": 2
-    },
-    {
-      "id": 16,
-      "name": "Clean Gutters",
-      "location_id": 8,
-      "frequency_id": 4,
-      "assigned_to": 1
-    },
-    {
-      "id": 17,
-      "name": "Service HVAC",
-      "location_id": 7,
-      "frequency_id": 4,
-      "assigned_to": 1
-    },
-    {
-      "id": 18,
-      "name": "Deep Clean Garage",
-      "location_id": 7,
-      "frequency_id": 5,
-      "assigned_to": 4
-    },
-    {
-      "id": 19,
-      "name": "Pressure Wash House",
-      "location_id": 8,
-      "frequency_id": 5,
-      "assigned_to": 1
-    },
-    {
-      "id": 20,
-      "name": "Shampoo Carpets",
-      "location_id": 7,
-      "frequency_id": 5,
-      "assigned_to": 2
-    },
-    {
-      "id": 21,
-      "name": "Pick Up Trash",
-      "location_id": 7,
-      "frequency_id": 1,
-      "assigned_to": 1
-    },
-    {
-      "id": 22,
-      "name": "Vacuum Floors",
-      "location_id": 7,
-      "frequency_id": 1,
-      "assigned_to": 2
-    },
-    {
-      "id": 23,
-      "name": "Sweep Floors",
-      "location_id": 7,
-      "frequency_id": 1,
-      "assigned_to": 4
-    },
-    {
       "id": 24,
       "name": "Make Bed",
       "location_id": 4,
       "frequency_id": 1,
-      "assigned_to": 5
+      "assigned_to": 5,
+      "start_date": "2024-12-09",
+      "end_date": "2025-12-09",
+      "due_time": "12:00",
+      "notes": "",
+      "is_complete": false,
+      "created_at": "2024-12-09T00:00:00.000Z"
     },
     {
       "id": 25,
       "name": "Pick Up Dirty Clothes",
       "location_id": 4,
       "frequency_id": 1,
-      "assigned_to": 1
+      "assigned_to": 1,
+      "start_date": "2024-12-09",
+      "end_date": "2025-12-09",
+      "due_time": "12:00",
+      "notes": "",
+      "is_complete": false,
+      "created_at": "2024-12-09T00:00:00.000Z"
     },
     {
       "id": 26,
       "name": "Put Away Clean Clothes",
       "location_id": 4,
       "frequency_id": 1,
-      "assigned_to": 2
+      "assigned_to": 2,
+      "start_date": "2024-12-09",
+      "end_date": "2025-12-09",
+      "due_time": "12:00",
+      "notes": "",
+      "is_complete": false,
+      "created_at": "2024-12-09T00:00:00.000Z"
     },
     {
       "id": 27,
       "name": "Change Cat Litter",
       "location_id": 7,
       "frequency_id": 1,
-      "assigned_to": 3
+      "assigned_to": 3,
+      "start_date": "2024-12-09",
+      "end_date": "2025-12-09",
+      "due_time": "12:00",
+      "notes": "",
+      "is_complete": false,
+      "created_at": "2024-12-09T00:00:00.000Z"
     },
     {
       "id": 28,
       "name": "Check Mail",
       "location_id": 8,
       "frequency_id": 1,
-      "assigned_to": 5
-    },
-    {
-      "id": 29,
-      "name": "asdf",
-      "location_id": 1,
-      "frequency_id": 1,
-      "assigned_to": 1,
+      "assigned_to": 5,
+      "start_date": "2024-12-09",
+      "end_date": "2025-12-09",
+      "due_time": "12:00",
+      "notes": "",
       "is_complete": false,
-      "due_date": "2024-12-07T01:54:44.527Z",
-      "due_time": "21:00",
-      "created_at": "2024-12-07T01:54:59.704Z"
+      "created_at": "2024-12-09T00:00:00.000Z"
     },
     {
       "id": 31,
@@ -305,7 +163,8 @@
       "end_date": "2025-01-01",
       "due_time": "21:00",
       "notes": "test this twice",
-      "created_at": "2024-12-08T17:01:13.661Z"
+      "created_at": "2024-12-08T17:01:13.661Z",
+      "is_complete": false
     },
     {
       "id": 33,
@@ -317,7 +176,21 @@
       "end_date": "2024-12-24",
       "due_time": "12:00",
       "notes": "these are the notes",
-      "created_at": "2024-12-08T21:17:02.948Z"
+      "created_at": "2024-12-08T21:17:02.948Z",
+      "is_complete": false
+    },
+    {
+      "id": 34,
+      "name": "pick up the trash outside on the curb",
+      "location_id": 1,
+      "frequency_id": 1,
+      "assigned_to": 1,
+      "start_date": "2024-12-13",
+      "end_date": "2025-01-10",
+      "due_time": "12:00",
+      "notes": "delete this",
+      "created_at": "2024-12-09T15:07:16.242Z",
+      "is_complete": false
     }
   ],
   "chore_instances": [
@@ -328,7 +201,16 @@
       "is_complete": true,
       "completed_at": "2024-12-09T01:07:47.730Z",
       "completed_by": 1,
-      "updated_at": "2024-12-09T01:07:47.730Z"
+      "updated_at": "2024-12-09T01:07:47.730Z",
+      "status": "completed",
+      "modified_history": [
+        {
+          "date": "2024-12-09T01:07:47.730Z",
+          "action": "completed",
+          "by": 1
+        }
+      ],
+      "skipped": false
     },
     {
       "id": 3,
@@ -336,7 +218,10 @@
       "due_date": "2024-12-17",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 4,
@@ -344,7 +229,10 @@
       "due_date": "2024-12-24",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 5,
@@ -352,7 +240,10 @@
       "due_date": "2024-12-31",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 7,
@@ -360,7 +251,10 @@
       "due_date": "2024-12-09",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 8,
@@ -369,7 +263,16 @@
       "is_complete": true,
       "completed_at": "2024-12-08T21:17:20.824Z",
       "completed_by": 1,
-      "updated_at": "2024-12-08T21:17:20.825Z"
+      "updated_at": "2024-12-08T21:17:20.825Z",
+      "status": "completed",
+      "modified_history": [
+        {
+          "date": "2024-12-08T21:17:20.824Z",
+          "action": "completed",
+          "by": 1
+        }
+      ],
+      "skipped": false
     },
     {
       "id": 9,
@@ -377,7 +280,10 @@
       "due_date": "2024-12-11",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 10,
@@ -385,7 +291,10 @@
       "due_date": "2024-12-12",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 11,
@@ -393,7 +302,10 @@
       "due_date": "2024-12-13",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 12,
@@ -401,7 +313,10 @@
       "due_date": "2024-12-14",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 13,
@@ -409,7 +324,10 @@
       "due_date": "2024-12-15",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 14,
@@ -417,7 +335,10 @@
       "due_date": "2024-12-16",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 15,
@@ -425,7 +346,10 @@
       "due_date": "2024-12-17",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 16,
@@ -433,7 +357,10 @@
       "due_date": "2024-12-18",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 17,
@@ -442,7 +369,16 @@
       "is_complete": true,
       "completed_at": "2024-12-08T21:17:32.911Z",
       "completed_by": 1,
-      "updated_at": "2024-12-08T21:17:32.912Z"
+      "updated_at": "2024-12-08T21:17:32.912Z",
+      "status": "completed",
+      "modified_history": [
+        {
+          "date": "2024-12-08T21:17:32.911Z",
+          "action": "completed",
+          "by": 1
+        }
+      ],
+      "skipped": false
     },
     {
       "id": 18,
@@ -450,7 +386,10 @@
       "due_date": "2024-12-20",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 19,
@@ -458,7 +397,10 @@
       "due_date": "2024-12-21",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 20,
@@ -466,7 +408,10 @@
       "due_date": "2024-12-22",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     },
     {
       "id": 21,
@@ -474,7 +419,329 @@
       "due_date": "2024-12-23",
       "is_complete": false,
       "completed_at": null,
-      "completed_by": null
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 22,
+      "chore_id": 34,
+      "due_date": "2024-12-12",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 23,
+      "chore_id": 34,
+      "due_date": "2024-12-13",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 24,
+      "chore_id": 34,
+      "due_date": "2024-12-14",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 25,
+      "chore_id": 34,
+      "due_date": "2024-12-15",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 26,
+      "chore_id": 34,
+      "due_date": "2024-12-16",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 27,
+      "chore_id": 34,
+      "due_date": "2024-12-17",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 28,
+      "chore_id": 34,
+      "due_date": "2024-12-18",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 29,
+      "chore_id": 34,
+      "due_date": "2024-12-19",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 30,
+      "chore_id": 34,
+      "due_date": "2024-12-20",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 31,
+      "chore_id": 34,
+      "due_date": "2024-12-21",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 32,
+      "chore_id": 34,
+      "due_date": "2024-12-22",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 33,
+      "chore_id": 34,
+      "due_date": "2024-12-23",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 34,
+      "chore_id": 34,
+      "due_date": "2024-12-24",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 35,
+      "chore_id": 34,
+      "due_date": "2024-12-25",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 36,
+      "chore_id": 34,
+      "due_date": "2024-12-26",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 37,
+      "chore_id": 34,
+      "due_date": "2024-12-27",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 38,
+      "chore_id": 34,
+      "due_date": "2024-12-28",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 39,
+      "chore_id": 34,
+      "due_date": "2024-12-29",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 40,
+      "chore_id": 34,
+      "due_date": "2024-12-30",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 41,
+      "chore_id": 34,
+      "due_date": "2024-12-31",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 42,
+      "chore_id": 34,
+      "due_date": "2025-01-01",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 43,
+      "chore_id": 34,
+      "due_date": "2025-01-02",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 44,
+      "chore_id": 34,
+      "due_date": "2025-01-03",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 45,
+      "chore_id": 34,
+      "due_date": "2025-01-04",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 46,
+      "chore_id": 34,
+      "due_date": "2025-01-05",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 47,
+      "chore_id": 34,
+      "due_date": "2025-01-06",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 48,
+      "chore_id": 34,
+      "due_date": "2025-01-07",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 49,
+      "chore_id": 34,
+      "due_date": "2025-01-08",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
+    },
+    {
+      "id": 50,
+      "chore_id": 34,
+      "due_date": "2025-01-09",
+      "is_complete": false,
+      "completed_at": null,
+      "completed_by": null,
+      "status": "active",
+      "modified_history": [],
+      "skipped": false
     }
   ]
 }

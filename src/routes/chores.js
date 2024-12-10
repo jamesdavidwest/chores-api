@@ -1,193 +1,145 @@
 const express = require('express');
 const router = express.Router();
+const TaskService = require('../services/TaskService');
+const CalendarService = require('../services/CalendarService');
+const NotificationService = require('../services/NotificationService');
 const { authenticate, authorize } = require('../middleware/auth');
-const { DEFAULT_DUE_TIME } = require('../utils/dateValidation');
-const {
-  getChores,
-  getChoreById,
-  createChore,
-  updateChore,
-  deleteChore,
-  getChoreInstances,
-  updateChoreInstance
-} = require('../utils/dataAccess');
 
-// Get all chores (filtered by user if not admin/manager)
+const taskService = new TaskService();
+const calendarService = new CalendarService();
+const notificationService = new NotificationService();
+
+// Get all tasks (filtered by user if not admin/manager)
 router.get('/', authenticate, async (req, res, next) => {
-  try {
-    console.log('GET /chores - User:', req.user);
-    console.log('GET /chores - Query:', req.query);
-    
-    const { startDate, endDate, userId } = req.query;
-    
-    const allChores = await getChores({ 
-      includeInstances: true,
-      startDate,
-      endDate,
-      userId: userId === 'null' ? null : userId
-    });
-    console.log('GET /chores - All chores:', allChores);
+    try {
+        const { startDate, endDate, userId } = req.query;
+        
+        let options = {
+            startDate,
+            endDate,
+            includeInstances: true
+        };
 
-    if (!allChores) {
-      return res.json([]);
+        if (!['ADMIN', 'MANAGER'].includes(req.user.role)) {
+            options.userId = req.user.id;
+        } else if (userId && userId !== 'null') {
+            options.userId = parseInt(userId, 10);
+        }
+
+        const tasks = await taskService.getTasks(options);
+        res.json(tasks || []);
+    } catch (error) {
+        next(error);
     }
-
-    let chores;
-    if (['ADMIN', 'MANAGER'].includes(req.user.role)) {
-      // If userId is provided in query and user is admin/manager, filter by that
-      if (userId && userId !== 'null') {
-        const filterUserId = parseInt(userId, 10);
-        chores = allChores.filter(chore => chore.assigned_to === filterUserId);
-      } else {
-        chores = allChores;
-      }
-    } else {
-      // Regular users can only see their own chores
-      chores = allChores.filter(chore => chore.assigned_to === req.user.id);
-    }
-
-    console.log('GET /chores - Filtered chores:', chores);
-    res.json(chores || []);
-  } catch (error) {
-    console.error('GET /chores - Error:', error);
-    next(error);
-  }
 });
 
-// Get a specific chore
+// Get a specific task
 router.get('/:id', authenticate, async (req, res, next) => {
-  try {
-    const chore = await getChoreById(req.params.id);
-    if (!chore) {
-      return res.status(404).json({ error: 'Chore not found' });
+    try {
+        const task = await taskService.getTaskById(req.params.id);
+        if (!task) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        if (!['ADMIN', 'MANAGER'].includes(req.user.role) && 
+            task.assigned_to !== req.user.id) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        res.json(task);
+    } catch (error) {
+        next(error);
     }
-
-    if (!['ADMIN', 'MANAGER'].includes(req.user.role) && 
-        chore.assigned_to !== req.user.id) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
-    // Get instances for this chore
-    const instances = await getChoreInstances({ choreId: chore.id });
-    const responseChore = {
-      ...chore,
-      instances
-    };
-
-    res.json(responseChore);
-  } catch (error) {
-    next(error);
-  }
 });
 
-// Create a new chore
+// Create a new task
 router.post('/', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
-  try {
-    console.log('POST /chores - Request body:', JSON.stringify(req.body, null, 2));
+    try {
+        const newTask = await taskService.createTask(req.body);
+        
+        // Generate instances if frequency is set
+        if (newTask.frequency_id) {
+            const startDate = new Date().toISOString().split('T')[0];
+            const endDate = req.body.end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            await calendarService.generateInstances(newTask.id, startDate, endDate);
+        }
 
-    const choreData = {
-      ...req.body,
-      due_time: req.body.due_time || DEFAULT_DUE_TIME
-    };
-
-    console.log('POST /chores - Processed choreData:', JSON.stringify(choreData, null, 2));
-
-    const newChore = await createChore(choreData);
-    console.log('POST /chores - Created chore:', JSON.stringify(newChore, null, 2));
-    
-    // Get instances that were created
-    const instances = await getChoreInstances({ choreId: newChore.id });
-    const responseChore = {
-      ...newChore,
-      instances
-    };
-    
-    res.status(201).json(responseChore);
-  } catch (error) {
-    next(error);
-  }
+        // Create notification for assigned user
+        await notificationService.createTaskNotification(newTask.id, 'assignment');
+        
+        res.status(201).json(newTask);
+    } catch (error) {
+        next(error);
+    }
 });
 
-// Update a chore instance's completion status
+// Update a task instance's completion status
 router.put('/:id/instances/:instanceId', authenticate, async (req, res, next) => {
-  try {
-    console.log('PUT /chores/:id/instances/:instanceId - Request:', {
-      choreId: req.params.id,
-      instanceId: req.params.instanceId,
-      body: req.body
-    });
+    try {
+        const task = await taskService.getTaskById(req.params.id);
+        if (!task) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
 
-    const chore = await getChoreById(req.params.id);
-    if (!chore) {
-      return res.status(404).json({ error: 'Chore not found' });
+        if (!['ADMIN', 'MANAGER'].includes(req.user.role) && 
+            task.assigned_to !== req.user.id) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const updates = {
+            ...req.body,
+            completed_at: req.body.is_complete ? new Date().toISOString() : null,
+            completed_by: req.body.is_complete ? req.user.id : null
+        };
+
+        const updatedInstance = await taskService.updateInstance(req.params.instanceId, updates);
+        if (!updatedInstance) {
+            return res.status(404).json({ error: 'Task instance not found' });
+        }
+
+        // Create completion notification if task is completed
+        if (updates.is_complete) {
+            await notificationService.createTaskNotification(req.params.id, 'completion');
+        }
+
+        res.json(updatedInstance);
+    } catch (error) {
+        next(error);
     }
-
-    if (!['ADMIN', 'MANAGER'].includes(req.user.role)) {
-      if (chore.assigned_to !== req.user.id) {
-        return res.status(403).json({ error: 'Forbidden' });
-      }
-    }
-
-    const { is_complete } = req.body;
-    const updates = {
-      is_complete,
-      completed_at: is_complete ? new Date().toISOString() : null,
-      completed_by: is_complete ? req.user.id : null
-    };
-
-    console.log('Updating instance with:', updates);
-
-    const updatedInstance = await updateChoreInstance(req.params.instanceId, updates);
-    if (!updatedInstance) {
-      return res.status(404).json({ error: 'Chore instance not found' });
-    }
-
-    console.log('Instance updated successfully:', updatedInstance);
-    res.json(updatedInstance);
-  } catch (error) {
-    console.error('Error updating instance:', error);
-    next(error);
-  }
 });
 
-// Update a chore
-router.put('/:id', authenticate, async (req, res, next) => {
-  try {
-    const chore = await getChoreById(req.params.id);
-    if (!chore) {
-      return res.status(404).json({ error: 'Chore not found' });
+// Update a task
+router.put('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
+    try {
+        const updatedTask = await taskService.updateTask(req.params.id, req.body);
+        if (!updatedTask) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+
+        if (req.body.frequency_id) {
+            // Regenerate future instances if frequency changed
+            const startDate = new Date().toISOString().split('T')[0];
+            const endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            await calendarService.generateInstances(updatedTask.id, startDate, endDate);
+        }
+
+        res.json(updatedTask);
+    } catch (error) {
+        next(error);
     }
-
-    if (!['ADMIN', 'MANAGER'].includes(req.user.role)) {
-      return res.status(403).json({ error: 'Forbidden - Only admins and managers can update chores' });
-    }
-
-    const updatedChore = await updateChore(req.params.id, req.body);
-    
-    // Get updated instances
-    const instances = await getChoreInstances({ choreId: updatedChore.id });
-    const responseChore = {
-      ...updatedChore,
-      instances
-    };
-
-    res.json(responseChore);
-  } catch (error) {
-    next(error);
-  }
 });
 
-// Delete a chore
+// Delete a task
 router.delete('/:id', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
-  try {
-    const success = await deleteChore(req.params.id);
-    if (!success) {
-      return res.status(404).json({ error: 'Chore not found' });
+    try {
+        const success = await taskService.deleteTask(req.params.id);
+        if (!success) {
+            return res.status(404).json({ error: 'Task not found' });
+        }
+        res.status(204).send();
+    } catch (error) {
+        next(error);
     }
-    res.status(204).send();
-  } catch (error) {
-    next(error);
-  }
 });
 
 module.exports = router;

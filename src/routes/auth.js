@@ -1,105 +1,70 @@
-const express = require("express");
-const jwt = require("jsonwebtoken");
-const path = require("path");
-const fs = require("fs").promises;
-
+const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
+const UserService = require('../services/UserService');
+const { authenticate } = require('../middleware/auth');
 
-// Helper function to read database
-async function readDatabase() {
-    const dbPath = path.join(__dirname, '../../data/database.json');
+const userService = new UserService();
+
+// Login route
+router.post('/login', async (req, res, next) => {
     try {
-        const data = await fs.readFile(dbPath, 'utf8');
-        return JSON.parse(data);
-    } catch (error) {
-        console.error('Error reading database:', error);
-        throw error;
-    }
-}
+        const { email, password } = req.body;
 
-// Login
-router.post("/login", async (req, res) => {
-    try {
-        console.log('Login attempt:', req.body);
-        const { username, password } = req.body;
-
-        if (!username || !password) {
-            return res.status(400).json({ error: "Username and password are required" });
+        if (!email || !password) {
+            return res.status(400).json({ error: 'Email and password are required' });
         }
 
-        // Read the database file
-        const db = await readDatabase();
-        
-        // Find user by username and password
-        const user = db.users.find(u => 
-            u.name.toLowerCase() === username.toLowerCase() && 
-            u.password === password
-        );
-
+        const user = await userService.validateCredentials(email, password);
         if (!user) {
-            return res.status(401).json({ error: "Invalid credentials" });
+            return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Create and sign JWT
         const token = jwt.sign(
-            { id: user.id, role: user.role }, 
-            process.env.JWT_SECRET || 'your-secret-key',
-            { expiresIn: "24h" }
+            { 
+                id: user.id,
+                role: user.role,
+                name: user.name
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
         );
 
-        console.log('Login successful for user:', { id: user.id, name: user.name, role: user.role });
-
-        // Return user info and token
-        res.json({ 
-            token,
-            user: {
-                id: user.id,
-                name: user.name,
-                role: user.role
-            }
-        });
+        res.json({ token, user });
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ error: "Internal server error" });
+        next(error);
     }
 });
 
-// Get current user
-router.get("/me", async (req, res) => {
+// Get current user profile
+router.get('/profile', authenticate, async (req, res, next) => {
     try {
-        // Get token from header
-        const token = req.headers.authorization?.split(' ')[1];
-        
-        if (!token) {
-            return res.status(401).json({ error: "No token provided" });
-        }
-
-        // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-        
-        // Read database
-        const db = await readDatabase();
-        
-        // Find user
-        const user = db.users.find(u => u.id === decoded.id);
-        
+        const user = await userService.getUserById(req.user.id, true);
         if (!user) {
-            return res.status(404).json({ error: "User not found" });
+            return res.status(404).json({ error: 'User not found' });
         }
-
-        // Return user info (excluding password)
-        res.json({
-            id: user.id,
-            name: user.name,
-            role: user.role
-        });
+        res.json(user);
     } catch (error) {
-        console.error('Auth error:', error);
-        if (error.name === 'JsonWebTokenError') {
-            return res.status(401).json({ error: "Invalid token" });
-        }
-        res.status(500).json({ error: "Internal server error" });
+        next(error);
     }
+});
+
+// Update user profile
+router.put('/profile', authenticate, async (req, res, next) => {
+    try {
+        const updatedUser = await userService.updateUser(req.user.id, req.body);
+        if (!updatedUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json(updatedUser);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Verify token is valid
+router.post('/verify', authenticate, (req, res) => {
+    res.json({ valid: true, user: req.user });
 });
 
 module.exports = router;

@@ -1,69 +1,114 @@
 const express = require('express');
 const router = express.Router();
+const CalendarService = require('../services/CalendarService');
+const NotificationService = require('../services/NotificationService');
 const { authenticate } = require('../middleware/auth');
-const calendarService = require('../services/calendarService');
 
-// Get chores for calendar view
-router.get('/events', authenticate, async (req, res) => {
+const calendarService = new CalendarService();
+const notificationService = new NotificationService();
+
+// Get calendar events
+router.get('/events', authenticate, async (req, res, next) => {
     try {
-        const { start, end } = req.query;
-        if (!start || !end) {
-            return res.status(400).json({ 
-                error: 'Start and end dates are required' 
-            });
+        const { startDate, endDate, userId, categoryId, locationId, status } = req.query;
+        
+        let options = {
+            startDate,
+            endDate,
+            categoryId,
+            locationId,
+            status
+        };
+
+        // Non-admin users can only see their own events
+        if (!['ADMIN', 'MANAGER'].includes(req.user.role)) {
+            options.userId = req.user.id;
+        } else if (userId) {
+            options.userId = userId;
         }
 
-        const events = await calendarService.getChoresForCalendar(start, end);
+        const events = await calendarService.getCalendarEvents(options);
         res.json(events);
     } catch (error) {
-        console.error('Error fetching calendar events:', error);
-        res.status(500).json({ 
-            error: 'Internal server error fetching calendar events' 
-        });
+        next(error);
     }
 });
 
-// Mark chore as completed
-router.post('/complete/:id', authenticate, async (req, res) => {
+// Get daily schedule
+router.get('/daily/:date', authenticate, async (req, res, next) => {
     try {
-        const choreId = parseInt(req.params.id);
-        const userId = req.body.userId; // Assuming you're passing the user ID in the request body
-
-        if (!choreId || !userId) {
-            return res.status(400).json({
-                error: 'Chore ID and User ID are required'
-            });
-        }
-
-        await calendarService.markChoreCompleted(choreId, userId);
-        res.json({ success: true });
+        const userId = !['ADMIN', 'MANAGER'].includes(req.user.role) ? req.user.id : req.query.userId;
+        const schedule = await calendarService.getDailySchedule(req.params.date, userId);
+        res.json(schedule);
     } catch (error) {
-        console.error('Error marking chore as completed:', error);
-        res.status(500).json({
-            error: 'Internal server error marking chore as completed'
-        });
+        next(error);
     }
 });
 
-// Update chore schedule
-router.patch('/reschedule/:id', authenticate, async (req, res) => {
+// Get weekly schedule
+router.get('/weekly/:startDate', authenticate, async (req, res, next) => {
     try {
-        const choreId = parseInt(req.params.id);
+        const userId = !['ADMIN', 'MANAGER'].includes(req.user.role) ? req.user.id : req.query.userId;
+        const schedule = await calendarService.getWeeklySchedule(req.params.startDate, userId);
+        res.json(schedule);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Get upcoming tasks
+router.get('/upcoming', authenticate, async (req, res, next) => {
+    try {
+        const days = req.query.days ? parseInt(req.query.days, 10) : 7;
+        const userId = !['ADMIN', 'MANAGER'].includes(req.user.role) ? req.user.id : req.query.userId;
+        const tasks = await calendarService.getUpcomingTasks(userId, days);
+        res.json(tasks);
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Move task instance to new date/time
+router.put('/events/:instanceId/move', authenticate, async (req, res, next) => {
+    try {
         const { date, time } = req.body;
-
-        if (!choreId || !date) {
-            return res.status(400).json({
-                error: 'Chore ID and new date are required'
+        
+        // Check for conflicts
+        const conflicts = await calendarService.getTaskConflicts(date, time, req.user.id);
+        if (conflicts && conflicts.length > 0) {
+            return res.status(409).json({
+                error: 'Time slot conflict',
+                conflicts
             });
         }
 
-        await calendarService.updateChoreSchedule(choreId, date, time);
-        res.json({ success: true });
+        const updatedInstance = await calendarService.moveInstance(req.params.instanceId, date, time);
+        if (!updatedInstance) {
+            return res.status(404).json({ error: 'Instance not found' });
+        }
+
+        // Create notification for rescheduled task
+        await notificationService.createTaskNotification(updatedInstance.task_id, 'reschedule');
+
+        res.json(updatedInstance);
     } catch (error) {
-        console.error('Error updating chore schedule:', error);
-        res.status(500).json({
-            error: 'Internal server error updating chore schedule'
-        });
+        next(error);
+    }
+});
+
+// Generate instances for date range
+router.post('/generate-instances', authenticate, authorize(['ADMIN', 'MANAGER']), async (req, res, next) => {
+    try {
+        const { taskId, startDate, endDate } = req.body;
+        
+        if (!taskId || !startDate || !endDate) {
+            return res.status(400).json({ error: 'taskId, startDate, and endDate are required' });
+        }
+
+        const instances = await calendarService.generateInstances(taskId, startDate, endDate);
+        res.json(instances);
+    } catch (error) {
+        next(error);
     }
 });
 
