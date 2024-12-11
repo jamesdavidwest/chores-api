@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -15,6 +16,13 @@ const categoryRoutes = require('./routes/categories');
 const rewardRoutes = require('./routes/rewards');
 const notificationRoutes = require('./routes/notifications');
 const errorHandler = require('./middleware/errorHandler');
+
+// Verify .env configuration
+console.log('Environment Check:', {
+    nodeEnv: process.env.NODE_ENV,
+    port: process.env.PORT,
+    jwtSecretLength: process.env.JWT_SECRET?.length || 'NOT SET'
+});
 
 // Verify database exists
 const DB_PATH = path.join(__dirname, '../data/chores.db');
@@ -45,8 +53,22 @@ process.on('unhandledRejection', (error) => {
     process.exit(1);
 });
 
+// CORS configuration
+const corsOptions = {
+    origin: [
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    optionsSuccessStatus: 200
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(morgan('dev'));
 app.use(bodyParser.json());
 
@@ -77,7 +99,11 @@ app.get('/health', async (req, res) => {
                 timestamp: new Date().toISOString(),
                 database: 'connected',
                 tables_accessible: true,
-                user_count: row ? row.count : 0
+                user_count: row ? row.count : 0,
+                env: {
+                    nodeEnv: process.env.NODE_ENV,
+                    hasJwtSecret: !!process.env.JWT_SECRET
+                }
             });
         });
     } catch (error) {
@@ -100,6 +126,9 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/rewards', rewardRoutes);
 app.use('/api/notifications', notificationRoutes);
 
+// Options pre-flight
+app.options('*', cors(corsOptions));
+
 // Error handling middleware
 app.use(errorHandler);
 
@@ -110,6 +139,7 @@ if (process.env.NODE_ENV !== 'test') {
         console.log(`Current working directory: ${process.cwd()}`);
         console.log(`Database path: ${DB_PATH}`);
         console.log(`Server running on port ${PORT}`);
+        console.log(`CORS enabled for: ${corsOptions.origin.join(', ')}`);
         console.log(`Try accessing: http://localhost:${PORT}/health`);
     });
 }

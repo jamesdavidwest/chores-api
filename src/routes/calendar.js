@@ -33,8 +33,10 @@ router.get('/events', authenticate, validateDateRange, async (req, res, next) =>
         }
 
         const events = await calendarService.getCalendarEvents(options);
+        console.log('Found ${events.length} events');
         res.json(events);
     } catch (error) {
+        console.error('Calendar route error:', error);
         next(error);
     }
 });

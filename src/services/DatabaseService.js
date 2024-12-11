@@ -3,7 +3,8 @@ const path = require('path');
 
 class DatabaseService {
     constructor() {
-        this.dbPath = path.join(__dirname, '../../../data/chores.db');
+        // Match the path convention used in server.js
+        this.dbPath = path.join(__dirname, '../../data/chores.db');
         this.db = new sqlite3.Database(this.dbPath);
     }
 

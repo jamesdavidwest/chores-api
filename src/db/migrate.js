@@ -1,37 +1,8 @@
-const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs').promises;
 const path = require('path');
+const DatabaseService = require('../services/DatabaseService');
 
-class DatabaseMigration {
-    constructor(dbPath) {
-        this.dbPath = dbPath;
-        this.db = null;
-    }
-
-    async init() {
-        return new Promise((resolve, reject) => {
-            this.db = new sqlite3.Database(this.dbPath, (err) => {
-                if (err) {
-                    reject(new Error(`Failed to open database: ${err.message}`));
-                    return;
-                }
-                resolve();
-            });
-        });
-    }
-
-    async runQuery(query, params = []) {
-        return new Promise((resolve, reject) => {
-            this.db.run(query, params, function(err) {
-                if (err) {
-                    reject(new Error(`Query failed: ${err.message}\nQuery: ${query}`));
-                    return;
-                }
-                resolve(this);
-            });
-        });
-    }
-
+class DatabaseMigration extends DatabaseService {
     async runScript(sqlScript) {
         return new Promise((resolve, reject) => {
             this.db.exec(sqlScript, (err) => {
@@ -47,9 +18,27 @@ class DatabaseMigration {
     async insertSeedData() {
         const seedData = {
             users: [
-                { id: 1, name: 'Admin User', email: 'admin@example.com', role: 'ADMIN' },
-                { id: 2, name: 'Manager', email: 'manager@example.com', role: 'MANAGER' },
-                { id: 3, name: 'Regular User', email: 'user@example.com', role: 'USER' }
+                { 
+                    id: 1, 
+                    name: 'Admin User', 
+                    email: 'admin@example.com', 
+                    password_hash: '$2b$10$EiPIJwKR0h1jvPX6qJWZFOXMKBeoJhJE.XlvqPxEHT9R7Ln6tKGHi', // password: admin123
+                    role: 'ADMIN' 
+                },
+                { 
+                    id: 2, 
+                    name: 'Manager', 
+                    email: 'manager@example.com', 
+                    password_hash: '$2b$10$EiPIJwKR0h1jvPX6qJWZFOXMKBeoJhJE.XlvqPxEHT9R7Ln6tKGHi', // password: admin123
+                    role: 'MANAGER' 
+                },
+                { 
+                    id: 3, 
+                    name: 'Regular User', 
+                    email: 'user@example.com', 
+                    password_hash: '$2b$10$EiPIJwKR0h1jvPX6qJWZFOXMKBeoJhJE.XlvqPxEHT9R7Ln6tKGHi', // password: admin123
+                    role: 'USER' 
+                }
             ],
             locations: [
                 { id: 1, name: 'Kitchen' },
@@ -121,7 +110,7 @@ class DatabaseMigration {
                     const values = Object.values(item);
                     
                     const query = `INSERT OR IGNORE INTO ${table} (${columns}) VALUES (${placeholders})`;
-                    await this.runQuery(query, values);
+                    await this.run(query, values);
                 }
                 console.log(`Seed data inserted for ${table}`);
             }
@@ -133,7 +122,7 @@ class DatabaseMigration {
     async migrate() {
         try {
             // Begin transaction
-            await this.runQuery('BEGIN TRANSACTION');
+            await this.beginTransaction();
 
             // Read and execute the schema
             const schemaPath = path.join(__dirname, 'schema.sql');
@@ -144,29 +133,22 @@ class DatabaseMigration {
             await this.insertSeedData();
 
             // Commit transaction
-            await this.runQuery('COMMIT');
+            await this.commit();
             
             console.log('Migration completed successfully');
         } catch (error) {
             // Rollback on error
-            await this.runQuery('ROLLBACK');
+            await this.rollback();
             throw error;
-        } finally {
-            // Close database connection
-            if (this.db) {
-                this.db.close();
-            }
         }
     }
 }
 
 // Run migration
 async function runMigration() {
-    const dbPath = path.join(__dirname, '../../data/chores.db');
-    const migration = new DatabaseMigration(dbPath);
+    const migration = new DatabaseMigration();
     
     try {
-        await migration.init();
         await migration.migrate();
     } catch (error) {
         console.error('Migration failed:', error.message);

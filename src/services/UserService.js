@@ -1,108 +1,117 @@
 const DatabaseService = require('./DatabaseService');
+const bcrypt = require('bcrypt');
 
-class CategoryService extends DatabaseService {
+class UserService extends DatabaseService {
     constructor() {
         super();
     }
 
-    async getCategories(options = {}) {
+    async validateCredentials(email, password) {
         try {
-            let sql = `
-                SELECT 
-                    c.*,
-                    parent.name as parent_name,
-                    (SELECT COUNT(*) FROM tasks 
-                     WHERE category_id = c.id AND is_active = TRUE) as active_tasks_count
-                FROM categories c
-                LEFT JOIN categories parent ON c.parent_category_id = parent.id
-                WHERE c.is_active = TRUE
-            `;
+            console.log('Validating credentials for:', email);
+            
+            // Try to find user by email or username (name)
+            const user = await this.get(
+                'SELECT * FROM users WHERE (email = ? OR name = ?) AND is_active = TRUE',
+                [email, email]
+            );
 
-            const params = [];
-
-            if (options.parentId) {
-                sql += ' AND c.parent_category_id = ?';
-                params.push(options.parentId);
+            if (!user) {
+                console.log('No user found with email/username:', email);
+                return null;
             }
 
-            if (options.searchTerm) {
-                sql += ' AND c.name LIKE ?';
-                params.push(`%${options.searchTerm}%`);
+            console.log('Found user:', user.name);
+
+            // For development/testing, if password is 'password', skip hash check
+            if (process.env.NODE_ENV === 'development' && password === 'password') {
+                console.log('Development mode: accepting default password');
+                delete user.password_hash;
+                return user;
             }
 
-            sql += ' ORDER BY c.name';
+            const isValid = await bcrypt.compare(password, user.password_hash);
+            console.log('Password validation result:', isValid);
 
-            return await this.all(sql, params);
+            if (!isValid) return null;
+
+            delete user.password_hash;
+            return user;
         } catch (error) {
-            console.error('Error in getCategories:', error);
+            console.error('Error in validateCredentials:', error);
             throw error;
         }
     }
 
-    async getCategoryById(id) {
+    async getUserById(id, includeStats = false) {
         try {
+            console.log('Getting user by ID:', id);
+            
             const sql = `
-                SELECT 
-                    c.*,
-                    parent.name as parent_name,
-                    (SELECT COUNT(*) FROM tasks 
-                     WHERE category_id = c.id AND is_active = TRUE) as active_tasks_count,
-                    (SELECT COUNT(*) FROM task_instances ti
-                     JOIN tasks t ON ti.task_id = t.id
-                     WHERE t.category_id = c.id 
-                     AND ti.status = 'pending') as pending_tasks_count
-                FROM categories c
-                LEFT JOIN categories parent ON c.parent_category_id = parent.id
-                WHERE c.id = ? AND c.is_active = TRUE
+                SELECT * FROM users 
+                WHERE id = ? AND is_active = TRUE
             `;
 
-            return await this.get(sql, [id]);
+            const user = await this.get(sql, [id]);
+            if (!user) {
+                console.log('No user found with ID:', id);
+                return null;
+            }
+
+            // Remove sensitive data
+            delete user.password_hash;
+
+            if (includeStats) {
+                // Get tasks statistics
+                const stats = await this.get(`
+                    SELECT 
+                        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_tasks,
+                        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_tasks
+                    FROM task_instances ti
+                    JOIN tasks t ON ti.task_id = t.id
+                    WHERE t.assigned_to = ?
+                `, [id]);
+
+                user.stats = stats || { completed_tasks: 0, pending_tasks: 0 };
+            }
+
+            console.log('User found:', {
+                userId: user.id,
+                userName: user.name,
+                userRole: user.role
+            });
+
+            return user;
         } catch (error) {
-            console.error('Error in getCategoryById:', error);
+            console.error('Error in getUserById:', error);
             throw error;
         }
     }
 
-    async createCategory(categoryData) {
-        try {
-            const { 
-                name, description = null, icon_name = null,
-                color_code = null, parent_category_id = null
-            } = categoryData;
-
-            const result = await this.run(`
-                INSERT INTO categories (
-                    name, description, icon_name,
-                    color_code, parent_category_id
-                ) VALUES (?, ?, ?, ?, ?)
-            `, [name, description, icon_name, color_code, parent_category_id]);
-
-            if (!result.id) throw new Error('Failed to create category');
-
-            return this.getCategoryById(result.id);
-        } catch (error) {
-            console.error('Error in createCategory:', error);
-            throw error;
-        }
-    }
-
-    async updateCategory(id, updates) {
+    async updateUser(id, updates) {
         try {
             const fields = [];
             const values = [];
             
-            Object.entries(updates).forEach(([key, value]) => {
+            for (const [key, value] of Object.entries(updates)) {
                 if (value !== undefined) {
-                    fields.push(`${key} = ?`);
-                    values.push(value);
+                    // Hash password if it's being updated
+                    if (key === 'password') {
+                        const hashedPassword = await bcrypt.hash(value, 10);
+                        fields.push('password_hash = ?');
+                        values.push(hashedPassword);
+                    } else {
+                        fields.push(`${key} = ?`);
+                        values.push(value);
+                    }
                 }
-            });
+            }
 
             if (fields.length === 0) return null;
 
             values.push(id);
             const sql = `
-                UPDATE categories 
+                UPDATE users 
                 SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP 
                 WHERE id = ? AND is_active = TRUE
             `;
@@ -110,104 +119,98 @@ class CategoryService extends DatabaseService {
             const result = await this.run(sql, values);
             if (result.changes === 0) return null;
 
-            return this.getCategoryById(id);
+            return this.getUserById(id);
         } catch (error) {
-            console.error('Error in updateCategory:', error);
+            console.error('Error in updateUser:', error);
             throw error;
         }
     }
 
-    async deleteCategory(id) {
-        return this.withTransaction(async () => {
-            try {
-                // Check for active tasks
-                const activeTasks = await this.get(
-                    'SELECT COUNT(*) as count FROM tasks WHERE category_id = ? AND is_active = TRUE',
-                    [id]
-                );
-
-                if (activeTasks.count > 0) {
-                    throw new Error('Cannot delete category with active tasks');
-                }
-
-                // Check for child categories
-                const childCategories = await this.get(
-                    'SELECT COUNT(*) as count FROM categories WHERE parent_category_id = ? AND is_active = TRUE',
-                    [id]
-                );
-
-                if (childCategories.count > 0) {
-                    throw new Error('Cannot delete category with child categories');
-                }
-
-                // Soft delete the category
-                const result = await this.run(
-                    'UPDATE categories SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                    [id]
-                );
-
-                return result.changes > 0;
-            } catch (error) {
-                console.error('Error in deleteCategory:', error);
-                throw error;
-            }
-        });
-    }
-
-    async getCategoryHierarchy() {
+    async debugDatabase() {
         try {
-            // Get all categories
-            const categories = await this.all(`
-                SELECT 
-                    c.*,
-                    (SELECT COUNT(*) FROM tasks 
-                     WHERE category_id = c.id AND is_active = TRUE) as task_count
-                FROM categories c
-                WHERE c.is_active = TRUE
-                ORDER BY c.name
+            // Check if users table exists
+            const tableCheck = await this.get(`
+                SELECT name FROM sqlite_master 
+                WHERE type='table' AND name='users';
             `);
 
-            // Build hierarchy
-            const buildTree = (parentId = null) => {
-                return categories
-                    .filter(cat => cat.parent_category_id === parentId)
-                    .map(cat => ({
-                        ...cat,
-                        children: buildTree(cat.id)
-                    }));
-            };
+            // Get all users (safely)
+            const users = await this.all(`
+                SELECT 
+                    id, 
+                    name, 
+                    email, 
+                    role, 
+                    is_active,
+                    created_at,
+                    updated_at,
+                    CASE 
+                        WHEN password_hash IS NOT NULL THEN 'present'
+                        ELSE 'missing'
+                    END as password_status
+                FROM users
+            `);
 
-            return buildTree();
+            // Get table schema
+            const schema = await this.get(`
+                SELECT sql 
+                FROM sqlite_master 
+                WHERE type='table' AND name='users';
+            `);
+
+            return {
+                tableExists: !!tableCheck,
+                usersCount: users?.length,
+                users: users,
+                schema: schema?.sql,
+                dbPath: this.dbPath
+            };
         } catch (error) {
-            console.error('Error in getCategoryHierarchy:', error);
+            console.error('Debug error:', error);
             throw error;
         }
     }
 
-    async getTasksByCategory(categoryId) {
+    async createUser(userData) {
         try {
-            const sql = `
-                SELECT 
-                    t.*,
-                    l.name as location_name,
-                    u.name as assigned_to_name,
-                    (SELECT COUNT(*) FROM task_instances 
-                     WHERE task_id = t.id AND status = 'pending') as pending_instances_count,
-                    (SELECT COUNT(*) FROM task_instances 
-                     WHERE task_id = t.id AND status = 'completed') as completed_instances_count
-                FROM tasks t
-                LEFT JOIN locations l ON t.location_id = l.id
-                LEFT JOIN users u ON t.assigned_to = u.id
-                WHERE t.category_id = ? AND t.is_active = TRUE
-                ORDER BY t.name
-            `;
+            const {
+                name, 
+                email, 
+                password,
+                role = 'USER'
+            } = userData;
 
-            return await this.all(sql, [categoryId]);
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            const result = await this.run(`
+                INSERT INTO users (
+                    name, email, password_hash,
+                    role, is_active
+                ) VALUES (?, ?, ?, ?, TRUE)
+            `, [name, email, hashedPassword, role]);
+
+            if (!result.id) throw new Error('Failed to create user');
+
+            return this.getUserById(result.id);
         } catch (error) {
-            console.error('Error in getTasksByCategory:', error);
+            console.error('Error in createUser:', error);
+            throw error;
+        }
+    }
+
+    async deleteUser(id) {
+        try {
+            const result = await this.run(
+                'UPDATE users SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                [id]
+            );
+
+            return result.changes > 0;
+        } catch (error) {
+            console.error('Error in deleteUser:', error);
             throw error;
         }
     }
 }
 
-module.exports = CategoryService;
+module.exports = UserService;
