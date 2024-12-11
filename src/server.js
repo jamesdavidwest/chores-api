@@ -7,7 +7,7 @@ const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 
 // Import routes
-const choreRoutes = require('./routes/chores');
+const taskRoutes = require('./routes/tasks');
 const authRoutes = require('./routes/auth');
 const locationRoutes = require('./routes/locations');
 const userRoutes = require('./routes/users');
@@ -74,7 +74,7 @@ app.use(bodyParser.json());
 
 // Basic route for testing
 app.get('/', (req, res) => {
-    res.json({ message: 'Chores API is running' });
+    res.json({ message: 'Tasks API is running' });
 });
 
 // Health check endpoint
@@ -118,7 +118,7 @@ app.get('/health', async (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/chores', choreRoutes);
+app.use('/api/tasks', taskRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/calendar', calendarRoutes);
