@@ -1,0 +1,49 @@
+# Version control
+.git
+.gitignore
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Dependencies
+node_modules
+package-lock.json
+
+# Environment variables
+.env
+.env.*
+
+# Testing
+coverage
+.nyc_output
+jest.config.js
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# SQLite database files
+*.sqlite
+*.sqlite3
+
+# Docker
+Dockerfile
+Dockerfile.dev
+docker-compose.yml
+.dockerignore
+
+# Documentation
+docs
+*.md
+
+# Miscellaneous
+.tmp
+.temp
