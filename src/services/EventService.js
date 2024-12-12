@@ -1,10 +1,12 @@
-// src/services/EventService.js
 const databaseService = require('./DatabaseService');
+const AppError = require('../utils/AppError');
+const { ErrorTypes } = require('../utils/errorTypes');
 
 class EventService {
   constructor() {
     this.db = databaseService.getKnex();
     this.tableName = 'events';
+    this.serviceName = 'EventService';
   }
 
   /**
@@ -20,7 +22,7 @@ class EventService {
       
       return event;
     } catch (error) {
-      throw this._handleError(error);
+      throw this._handleError(error, 'createEvent', { eventData });
     }
   }
 
@@ -46,7 +48,10 @@ class EventService {
       return createdEvents;
     } catch (error) {
       await trx.rollback();
-      throw this._handleError(error);
+      throw this._handleError(error, 'createManyEvents', { 
+        eventCount: events.length,
+        failedEvent: error.event
+      });
     }
   }
 
@@ -62,12 +67,20 @@ class EventService {
         .first();
 
       if (!event) {
-        throw new Error('Event not found');
+        throw new AppError(
+          ErrorTypes.NOT_FOUND,
+          this.serviceName,
+          'getEventById',
+          {
+            resource: 'Event',
+            id: id
+          }
+        );
       }
 
       return event;
     } catch (error) {
-      throw this._handleError(error);
+      throw this._handleError(error, 'getEventById', { id });
     }
   }
 
@@ -123,7 +136,7 @@ class EventService {
         }
       };
     } catch (error) {
-      throw this._handleError(error);
+      throw this._handleError(error, 'getEvents', { options });
     }
   }
 
@@ -141,12 +154,21 @@ class EventService {
         .returning('*');
 
       if (!event) {
-        throw new Error('Event not found');
+        throw new AppError(
+          ErrorTypes.NOT_FOUND,
+          this.serviceName,
+          'updateEvent',
+          {
+            resource: 'Event',
+            id: id,
+            updateAttempted: true
+          }
+        );
       }
 
       return event;
     } catch (error) {
-      throw this._handleError(error);
+      throw this._handleError(error, 'updateEvent', { id, updateData });
     }
   }
 
@@ -162,12 +184,21 @@ class EventService {
         .delete();
 
       if (!deleted) {
-        throw new Error('Event not found');
+        throw new AppError(
+          ErrorTypes.NOT_FOUND,
+          this.serviceName,
+          'deleteEvent',
+          {
+            resource: 'Event',
+            id: id,
+            deleteAttempted: true
+          }
+        );
       }
 
       return true;
     } catch (error) {
-      throw this._handleError(error);
+      throw this._handleError(error, 'deleteEvent', { id });
     }
   }
 
@@ -183,7 +214,10 @@ class EventService {
         .whereBetween('start_date', [startDate, endDate])
         .orderBy('start_date', 'asc');
     } catch (error) {
-      throw this._handleError(error);
+      throw this._handleError(error, 'getEventsByDateRange', { 
+        startDate: startDate.toISOString(), 
+        endDate: endDate.toISOString() 
+      });
     }
   }
 
@@ -203,7 +237,7 @@ class EventService {
         .offset(offset)
         .orderBy('created_at', 'desc');
     } catch (error) {
-      throw this._handleError(error);
+      throw this._handleError(error, 'getEventsByType', { type, options });
     }
   }
 
@@ -219,33 +253,63 @@ class EventService {
         .orWhere('description', 'like', `%${query}%`)
         .orderBy('created_at', 'desc');
     } catch (error) {
-      throw this._handleError(error);
+      throw this._handleError(error, 'searchEvents', { query });
     }
   }
 
   /**
-   * Handle database errors
+   * Handle database errors with specific context
    * @private
    * @param {Error} error 
-   * @returns {Error}
+   * @param {string} method 
+   * @param {Object} details
+   * @returns {AppError}
    */
-  _handleError(error) {
-    // Log the error here if you have a logging service
-    console.error('EventService Error:', error);
-
-    if (error.code === '23505') {
-      return new Error('Duplicate event entry');
-    }
-
-    if (error.code === '23503') {
-      return new Error('Referenced record not found');
-    }
-
-    if (error.message === 'Event not found') {
+  _handleError(error, method, details = {}) {
+    // If it's already an AppError, just pass it through
+    if (error instanceof AppError) {
       return error;
     }
 
-    return new Error('Database operation failed');
+    // Handle specific database errors
+    if (error.code === '23505') {
+      return new AppError(
+        ErrorTypes.DUPLICATE_ENTRY,
+        this.serviceName,
+        method,
+        {
+          error: error.detail,
+          constraint: error.constraint,
+          ...details
+        }
+      );
+    }
+
+    if (error.code === '23503') {
+      return new AppError(
+        ErrorTypes.VALIDATION_ERROR,
+        this.serviceName,
+        method,
+        {
+          message: 'Referenced record does not exist',
+          error: error.detail,
+          constraint: error.constraint,
+          ...details
+        }
+      );
+    }
+
+    // Handle general database errors
+    return new AppError(
+      ErrorTypes.DB_ERROR,
+      this.serviceName,
+      method,
+      {
+        message: error.message,
+        code: error.code,
+        ...details
+      }
+    );
   }
 }
 

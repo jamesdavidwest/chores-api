@@ -1,11 +1,13 @@
-// src/services/UserService.js
 const bcrypt = require('bcrypt');
 const databaseService = require('./DatabaseService');
+const AppError = require('../utils/AppError');
+const { ErrorTypes } = require('../utils/errorTypes');
 
 class UserService {
   constructor() {
     this.db = databaseService.getKnex();
     this.tableName = 'users';
+    this.serviceName = 'UserService';
   }
 
   /**
@@ -29,7 +31,10 @@ class UserService {
 
       return user;
     } catch (error) {
-      throw this._handleError(error);
+      throw this._handleError(error, 'createUser', { 
+        email: userData.email,
+        username: userData.username 
+      });
     }
   }
 
@@ -44,9 +49,22 @@ class UserService {
         .where({ email })
         .first();
 
+      if (!user) {
+        throw new AppError(
+          ErrorTypes.NOT_FOUND,
+          this.serviceName,
+          'findByEmail',
+          {
+            resource: 'User',
+            identifier: 'email',
+            value: email
+          }
+        );
+      }
+
       return user;
     } catch (error) {
-      throw this._handleError(error);
+      throw this._handleError(error, 'findByEmail', { email });
     }
   }
 
@@ -63,12 +81,20 @@ class UserService {
         .first();
 
       if (!user) {
-        throw new Error('User not found');
+        throw new AppError(
+          ErrorTypes.NOT_FOUND,
+          this.serviceName,
+          'findById',
+          {
+            resource: 'User',
+            id: id
+          }
+        );
       }
 
       return user;
     } catch (error) {
-      throw this._handleError(error);
+      throw this._handleError(error, 'findById', { id });
     }
   }
 
@@ -95,14 +121,24 @@ class UserService {
         .returning(['id', 'email', 'username', 'role', 'created_at', 'updated_at']);
 
       if (!updatedUser) {
-        throw new Error('User not found');
+        throw new AppError(
+          ErrorTypes.NOT_FOUND,
+          this.serviceName,
+          'updateUser',
+          {
+            resource: 'User',
+            id: id,
+            updateAttempted: true,
+            fields: Object.keys(updateData)
+          }
+        );
       }
 
       await trx.commit();
       return updatedUser;
     } catch (error) {
       await trx.rollback();
-      throw this._handleError(error);
+      throw this._handleError(error, 'updateUser', { id, updateFields: Object.keys(updateData) });
     }
   }
 
@@ -120,14 +156,23 @@ class UserService {
         .delete();
 
       if (!deleted) {
-        throw new Error('User not found');
+        throw new AppError(
+          ErrorTypes.NOT_FOUND,
+          this.serviceName,
+          'deleteUser',
+          {
+            resource: 'User',
+            id: id,
+            deleteAttempted: true
+          }
+        );
       }
 
       await trx.commit();
       return true;
     } catch (error) {
       await trx.rollback();
-      throw this._handleError(error);
+      throw this._handleError(error, 'deleteUser', { id });
     }
   }
 
@@ -180,7 +225,7 @@ class UserService {
         }
       };
     } catch (error) {
-      throw this._handleError(error);
+      throw this._handleError(error, 'getUsers', { options });
     }
   }
 
@@ -192,9 +237,21 @@ class UserService {
    */
   async validatePassword(user, password) {
     try {
-      return await bcrypt.compare(password, user.password);
+      const isValid = await bcrypt.compare(password, user.password);
+      if (!isValid) {
+        throw new AppError(
+          ErrorTypes.INVALID_CREDENTIALS,
+          this.serviceName,
+          'validatePassword',
+          {
+            reason: 'Password does not match',
+            userId: user.id
+          }
+        );
+      }
+      return true;
     } catch (error) {
-      throw new Error('Password validation failed');
+      throw this._handleError(error, 'validatePassword', { userId: user.id });
     }
   }
 
@@ -214,13 +271,19 @@ class UserService {
         .first();
 
       if (!user) {
-        throw new Error('User not found');
+        throw new AppError(
+          ErrorTypes.NOT_FOUND,
+          this.serviceName,
+          'changePassword',
+          {
+            resource: 'User',
+            id: id,
+            action: 'password change'
+          }
+        );
       }
 
-      const isValid = await this.validatePassword(user, currentPassword);
-      if (!isValid) {
-        throw new Error('Current password is incorrect');
-      }
+      await this.validatePassword(user, currentPassword);
 
       const hashedPassword = await bcrypt.hash(newPassword, parseInt(process.env.BCRYPT_ROUNDS) || 12);
       
@@ -235,31 +298,77 @@ class UserService {
       return true;
     } catch (error) {
       await trx.rollback();
-      throw this._handleError(error);
+      throw this._handleError(error, 'changePassword', { id });
     }
   }
 
   /**
-   * Handle database errors
+   * Handle database errors with specific context
    * @private
    * @param {Error} error 
-   * @returns {Error}
+   * @param {string} method 
+   * @param {Object} details
+   * @returns {AppError}
    */
-  _handleError(error) {
-    // Log the error here if you have a logging service
-    console.error('UserService Error:', error);
-
-    if (error.code === '23505') {
-      return new Error('Email or username already exists');
-    }
-
-    if (error.message === 'User not found' || 
-        error.message === 'Current password is incorrect' ||
-        error.message === 'Password validation failed') {
+  _handleError(error, method, details = {}) {
+    // If it's already an AppError, just pass it through
+    if (error instanceof AppError) {
       return error;
     }
 
-    return new Error('Database operation failed');
+    // Handle specific database errors
+    if (error.code === '23505') {
+      return new AppError(
+        ErrorTypes.DUPLICATE_ENTRY,
+        this.serviceName,
+        method,
+        {
+          error: error.detail,
+          constraint: error.constraint,
+          ...details
+        }
+      );
+    }
+
+    if (error.code === '23503') {
+      return new AppError(
+        ErrorTypes.VALIDATION_ERROR,
+        this.serviceName,
+        method,
+        {
+          message: 'Referenced record does not exist',
+          error: error.detail,
+          constraint: error.constraint,
+          ...details
+        }
+      );
+    }
+
+    // Handle bcrypt errors
+    if (error.name === 'bcryptError') {
+      return new AppError(
+        ErrorTypes.INTERNAL_ERROR,
+        this.serviceName,
+        method,
+        {
+          message: 'Password hashing failed',
+          error: error.message,
+          ...details
+        }
+      );
+    }
+
+    // Handle general database errors
+    return new AppError(
+      ErrorTypes.DB_ERROR,
+      this.serviceName,
+      method,
+      {
+        message: error.message,
+        code: error.code,
+        ...details
+      }
+    );
   }
 }
 
