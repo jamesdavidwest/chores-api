@@ -1,75 +1,89 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+// src/services/DatabaseService.js
+const knex = require('knex');
+const dbConfig = require('../config/database');
 
 class DatabaseService {
-    constructor() {
-        // Match the path convention used in server.js
-        this.dbPath = path.join(__dirname, '../../data/chores.db');
-        this.db = new sqlite3.Database(this.dbPath);
-    }
+  constructor() {
+    this.knex = null;
+    this.config = null;
+    this._connected = false;
+  }
 
-    async run(sql, params = []) {
-        return new Promise((resolve, reject) => {
-            this.db.run(sql, params, function(err) {
-                if (err) {
-                    console.error('Database error:', err);
-                    reject(err);
-                    return;
-                }
-                resolve({ id: this.lastID, changes: this.changes });
-            });
-        });
-    }
+  /**
+   * Initialize the database connection
+   * @param {string} environment - The environment to use (development, production, testing)
+   * @returns {Promise<void>}
+   */
+  async initialize(environment = process.env.NODE_ENV || 'development') {
+    try {
+      this.config = dbConfig[environment];
+      
+      if (!this.config) {
+        throw new Error(`Invalid environment: ${environment}`);
+      }
 
-    async get(sql, params = []) {
-        return new Promise((resolve, reject) => {
-            this.db.get(sql, params, (err, row) => {
-                if (err) {
-                    console.error('Database error:', err);
-                    reject(err);
-                    return;
-                }
-                resolve(row);
-            });
-        });
+      this.knex = knex(this.config);
+      
+      // Test the connection
+      await this.knex.raw('SELECT 1');
+      this._connected = true;
+      
+      console.log(`Database connected successfully in ${environment} mode`);
+    } catch (error) {
+      console.error('Database connection failed:', error);
+      throw error;
     }
+  }
 
-    async all(sql, params = []) {
-        return new Promise((resolve, reject) => {
-            this.db.all(sql, params, (err, rows) => {
-                if (err) {
-                    console.error('Database error:', err);
-                    reject(err);
-                    return;
-                }
-                resolve(rows);
-            });
-        });
+  /**
+   * Get the Knex instance
+   * @returns {Knex} The Knex instance
+   * @throws {Error} If database is not initialized
+   */
+  getKnex() {
+    if (!this._connected) {
+      throw new Error('Database not initialized. Call initialize() first.');
     }
+    return this.knex;
+  }
 
-    async beginTransaction() {
-        return this.run('BEGIN TRANSACTION');
-    }
+  /**
+   * Begin a transaction
+   * @returns {Knex.Transaction} A transaction object
+   */
+  async beginTransaction() {
+    return await this.getKnex().transaction();
+  }
 
-    async commit() {
-        return this.run('COMMIT');
+  /**
+   * Close the database connection
+   * @returns {Promise<void>}
+   */
+  async close() {
+    if (this._connected && this.knex) {
+      await this.knex.destroy();
+      this._connected = false;
+      console.log('Database connection closed');
     }
+  }
 
-    async rollback() {
-        return this.run('ROLLBACK');
-    }
+  /**
+   * Get connection status
+   * @returns {boolean} Whether the database is connected
+   */
+  isConnected() {
+    return this._connected;
+  }
 
-    async withTransaction(callback) {
-        try {
-            await this.beginTransaction();
-            const result = await callback();
-            await this.commit();
-            return result;
-        } catch (error) {
-            await this.rollback();
-            throw error;
-        }
-    }
+  /**
+   * Get current environment
+   * @returns {string} The current environment
+   */
+  getEnvironment() {
+    return this.config?.client === 'sqlite3' ? 'development' : 'production';
+  }
 }
 
-module.exports = DatabaseService;
+// Export a singleton instance
+const databaseService = new DatabaseService();
+module.exports = databaseService;

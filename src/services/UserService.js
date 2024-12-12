@@ -1,216 +1,268 @@
-const DatabaseService = require('./DatabaseService');
+// src/services/UserService.js
 const bcrypt = require('bcrypt');
+const databaseService = require('./DatabaseService');
 
-class UserService extends DatabaseService {
-    constructor() {
-        super();
+class UserService {
+  constructor() {
+    this.db = databaseService.getKnex();
+    this.tableName = 'users';
+  }
+
+  /**
+   * Create a new user
+   * @param {Object} userData User data
+   * @returns {Promise<Object>} Created user
+   */
+  async createUser(userData) {
+    try {
+      const { password, ...otherData } = userData;
+      const hashedPassword = await bcrypt.hash(password, parseInt(process.env.BCRYPT_ROUNDS) || 12);
+
+      const [user] = await this.db(this.tableName)
+        .insert({
+          ...otherData,
+          password: hashedPassword,
+          created_at: new Date(),
+          updated_at: new Date()
+        })
+        .returning(['id', 'email', 'username', 'role', 'created_at', 'updated_at']);
+
+      return user;
+    } catch (error) {
+      throw this._handleError(error);
     }
+  }
 
-    async validateCredentials(email, password) {
-        try {
-            console.log('Validating credentials for:', email);
-            
-            // Try to find user by email or username (name)
-            const user = await this.get(
-                'SELECT * FROM users WHERE (email = ? OR name = ?) AND is_active = TRUE',
-                [email, email]
-            );
+  /**
+   * Find user by email
+   * @param {string} email User email
+   * @returns {Promise<Object>} User object
+   */
+  async findByEmail(email) {
+    try {
+      const user = await this.db(this.tableName)
+        .where({ email })
+        .first();
 
-            if (!user) {
-                console.log('No user found with email/username:', email);
-                return null;
-            }
-
-            console.log('Found user:', user.name);
-
-            // For development/testing, if password is 'password', skip hash check
-            if (process.env.NODE_ENV === 'development' && password === 'password') {
-                console.log('Development mode: accepting default password');
-                delete user.password_hash;
-                return user;
-            }
-
-            const isValid = await bcrypt.compare(password, user.password_hash);
-            console.log('Password validation result:', isValid);
-
-            if (!isValid) return null;
-
-            delete user.password_hash;
-            return user;
-        } catch (error) {
-            console.error('Error in validateCredentials:', error);
-            throw error;
-        }
+      return user;
+    } catch (error) {
+      throw this._handleError(error);
     }
+  }
 
-    async getUserById(id, includeStats = false) {
-        try {
-            console.log('Getting user by ID:', id);
-            
-            const sql = `
-                SELECT * FROM users 
-                WHERE id = ? AND is_active = TRUE
-            `;
+  /**
+   * Find user by ID
+   * @param {string|number} id User ID
+   * @returns {Promise<Object>} User object
+   */
+  async findById(id) {
+    try {
+      const user = await this.db(this.tableName)
+        .where({ id })
+        .select(['id', 'email', 'username', 'role', 'created_at', 'updated_at'])
+        .first();
 
-            const user = await this.get(sql, [id]);
-            if (!user) {
-                console.log('No user found with ID:', id);
-                return null;
-            }
+      if (!user) {
+        throw new Error('User not found');
+      }
 
-            // Remove sensitive data
-            delete user.password_hash;
+      return user;
+    } catch (error) {
+      throw this._handleError(error);
+    }
+  }
 
-            if (includeStats) {
-                // Get tasks statistics
-                const stats = await this.get(`
-                    SELECT 
-                        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_tasks,
-                        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_tasks
-                    FROM task_instances ti
-                    JOIN tasks t ON ti.task_id = t.id
-                    WHERE t.assigned_to = ?
-                `, [id]);
+  /**
+   * Update user
+   * @param {string|number} id User ID
+   * @param {Object} updateData Update data
+   * @returns {Promise<Object>} Updated user
+   */
+  async updateUser(id, updateData) {
+    const trx = await this.db.transaction();
 
-                user.stats = stats || { completed_tasks: 0, pending_tasks: 0 };
-            }
+    try {
+      const { password, ...otherUpdates } = updateData;
+      const updates = { ...otherUpdates, updated_at: new Date() };
 
-            console.log('User found:', {
-                userId: user.id,
-                userName: user.name,
-                userRole: user.role
+      if (password) {
+        updates.password = await bcrypt.hash(password, parseInt(process.env.BCRYPT_ROUNDS) || 12);
+      }
+
+      const [updatedUser] = await trx(this.tableName)
+        .where({ id })
+        .update(updates)
+        .returning(['id', 'email', 'username', 'role', 'created_at', 'updated_at']);
+
+      if (!updatedUser) {
+        throw new Error('User not found');
+      }
+
+      await trx.commit();
+      return updatedUser;
+    } catch (error) {
+      await trx.rollback();
+      throw this._handleError(error);
+    }
+  }
+
+  /**
+   * Delete user
+   * @param {string|number} id User ID
+   * @returns {Promise<boolean>} Success status
+   */
+  async deleteUser(id) {
+    const trx = await this.db.transaction();
+
+    try {
+      const deleted = await trx(this.tableName)
+        .where({ id })
+        .delete();
+
+      if (!deleted) {
+        throw new Error('User not found');
+      }
+
+      await trx.commit();
+      return true;
+    } catch (error) {
+      await trx.rollback();
+      throw this._handleError(error);
+    }
+  }
+
+  /**
+   * Get users with pagination
+   * @param {Object} options Query options
+   * @returns {Promise<{data: Array<Object>, pagination: Object}>}
+   */
+  async getUsers(options = {}) {
+    const {
+      page = 1,
+      limit = 10,
+      role,
+      sortBy = 'created_at',
+      sortOrder = 'desc',
+      search
+    } = options;
+
+    try {
+      const query = this.db(this.tableName)
+        .select(['id', 'email', 'username', 'role', 'created_at', 'updated_at'])
+        .modify(queryBuilder => {
+          if (role) {
+            queryBuilder.where({ role });
+          }
+          if (search) {
+            queryBuilder.where(builder => {
+              builder
+                .where('email', 'like', `%${search}%`)
+                .orWhere('username', 'like', `%${search}%`);
             });
+          }
+        })
+        .orderBy(sortBy, sortOrder);
 
-            return user;
-        } catch (error) {
-            console.error('Error in getUserById:', error);
-            throw error;
+      const offset = (page - 1) * limit;
+      
+      const [count, users] = await Promise.all([
+        this.db(this.tableName).count('id as total').first(),
+        query.limit(limit).offset(offset)
+      ]);
+
+      return {
+        data: users,
+        pagination: {
+          page,
+          limit,
+          total: parseInt(count.total),
+          totalPages: Math.ceil(count.total / limit)
         }
+      };
+    } catch (error) {
+      throw this._handleError(error);
+    }
+  }
+
+  /**
+   * Validate user password
+   * @param {Object} user User object
+   * @param {string} password Password to validate
+   * @returns {Promise<boolean>} Validation result
+   */
+  async validatePassword(user, password) {
+    try {
+      return await bcrypt.compare(password, user.password);
+    } catch (error) {
+      throw new Error('Password validation failed');
+    }
+  }
+
+  /**
+   * Change user password
+   * @param {string|number} id User ID
+   * @param {string} currentPassword Current password
+   * @param {string} newPassword New password
+   * @returns {Promise<boolean>} Success status
+   */
+  async changePassword(id, currentPassword, newPassword) {
+    const trx = await this.db.transaction();
+
+    try {
+      const user = await trx(this.tableName)
+        .where({ id })
+        .first();
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const isValid = await this.validatePassword(user, currentPassword);
+      if (!isValid) {
+        throw new Error('Current password is incorrect');
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, parseInt(process.env.BCRYPT_ROUNDS) || 12);
+      
+      await trx(this.tableName)
+        .where({ id })
+        .update({
+          password: hashedPassword,
+          updated_at: new Date()
+        });
+
+      await trx.commit();
+      return true;
+    } catch (error) {
+      await trx.rollback();
+      throw this._handleError(error);
+    }
+  }
+
+  /**
+   * Handle database errors
+   * @private
+   * @param {Error} error 
+   * @returns {Error}
+   */
+  _handleError(error) {
+    // Log the error here if you have a logging service
+    console.error('UserService Error:', error);
+
+    if (error.code === '23505') {
+      return new Error('Email or username already exists');
     }
 
-    async updateUser(id, updates) {
-        try {
-            const fields = [];
-            const values = [];
-            
-            for (const [key, value] of Object.entries(updates)) {
-                if (value !== undefined) {
-                    // Hash password if it's being updated
-                    if (key === 'password') {
-                        const hashedPassword = await bcrypt.hash(value, 10);
-                        fields.push('password_hash = ?');
-                        values.push(hashedPassword);
-                    } else {
-                        fields.push(`${key} = ?`);
-                        values.push(value);
-                    }
-                }
-            }
-
-            if (fields.length === 0) return null;
-
-            values.push(id);
-            const sql = `
-                UPDATE users 
-                SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP 
-                WHERE id = ? AND is_active = TRUE
-            `;
-
-            const result = await this.run(sql, values);
-            if (result.changes === 0) return null;
-
-            return this.getUserById(id);
-        } catch (error) {
-            console.error('Error in updateUser:', error);
-            throw error;
-        }
+    if (error.message === 'User not found' || 
+        error.message === 'Current password is incorrect' ||
+        error.message === 'Password validation failed') {
+      return error;
     }
 
-    async debugDatabase() {
-        try {
-            // Check if users table exists
-            const tableCheck = await this.get(`
-                SELECT name FROM sqlite_master 
-                WHERE type='table' AND name='users';
-            `);
-
-            // Get all users (safely)
-            const users = await this.all(`
-                SELECT 
-                    id, 
-                    name, 
-                    email, 
-                    role, 
-                    is_active,
-                    created_at,
-                    updated_at,
-                    CASE 
-                        WHEN password_hash IS NOT NULL THEN 'present'
-                        ELSE 'missing'
-                    END as password_status
-                FROM users
-            `);
-
-            // Get table schema
-            const schema = await this.get(`
-                SELECT sql 
-                FROM sqlite_master 
-                WHERE type='table' AND name='users';
-            `);
-
-            return {
-                tableExists: !!tableCheck,
-                usersCount: users?.length,
-                users: users,
-                schema: schema?.sql,
-                dbPath: this.dbPath
-            };
-        } catch (error) {
-            console.error('Debug error:', error);
-            throw error;
-        }
-    }
-
-    async createUser(userData) {
-        try {
-            const {
-                name, 
-                email, 
-                password,
-                role = 'USER'
-            } = userData;
-
-            const hashedPassword = await bcrypt.hash(password, 10);
-
-            const result = await this.run(`
-                INSERT INTO users (
-                    name, email, password_hash,
-                    role, is_active
-                ) VALUES (?, ?, ?, ?, TRUE)
-            `, [name, email, hashedPassword, role]);
-
-            if (!result.id) throw new Error('Failed to create user');
-
-            return this.getUserById(result.id);
-        } catch (error) {
-            console.error('Error in createUser:', error);
-            throw error;
-        }
-    }
-
-    async deleteUser(id) {
-        try {
-            const result = await this.run(
-                'UPDATE users SET is_active = FALSE, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                [id]
-            );
-
-            return result.changes > 0;
-        } catch (error) {
-            console.error('Error in deleteUser:', error);
-            throw error;
-        }
-    }
+    return new Error('Database operation failed');
+  }
 }
 
-module.exports = UserService;
+// Export a singleton instance
+const userService = new UserService();
+module.exports = userService;

@@ -1,34 +1,39 @@
 {
-  "name": "chores-api",
+  "name": "backend-boiler",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "src/server.js",
+  "description": "A flexible backend boilerplate with authentication, database abstraction, and comprehensive features",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "jest --watchAll",
-    "update-chores": "node src/utils/runUpdate.js",
     "migrate": "node src/db/migrate.js",
     "init-db": "node scripts/init-db.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "backend",
+    "boilerplate",
+    "express",
+    "api",
+    "rest",
+    "authentication",
+    "database"
+  ],
+  "author": "James West",
+  "license": "MIT",
   "dependencies": {
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
-    "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.1",
     "jsonwebtoken": "^9.0.2",
+    "knex": "^3.1.0",
     "morgan": "^1.10.0",
+    "pg": "^8.13.1",
     "sqlite3": "^5.1.7"
   },
-  "directories": {
-    "test": "tests"
-  },
-  "description": "",
   "devDependencies": {
     "jest": "^29.7.0",
     "nodemon": "^3.1.7",
