@@ -1,55 +1,93 @@
-const jwt = require('jsonwebtoken');
+const jwtService = require('../services/JWTService');
+const { AppError } = require('../utils/AppError');
+const { config } = require('../config/auth');
 
-const authenticate = (req, res, next) => {
-    const authHeader = req.headers.authorization;
-    
+const extractToken = (req) => {
+    const authHeader = req.headers[config.tokens.accessTokenHeader.toLowerCase()];
     if (!authHeader) {
-        console.log('Authentication failed: No authorization header');
-        return res.status(401).json({ error: 'No token provided' });
+        throw new AppError(401, 'AUTH006', 'No authorization header found');
     }
 
-    const token = authHeader.split(' ')[1];
-    
+    const [bearer, token] = authHeader.split(' ');
+    if (bearer !== config.tokens.bearerPrefix || !token) {
+        throw new AppError(401, 'AUTH007', 'Invalid authorization header format');
+    }
+
+    return token;
+};
+
+const authenticate = async (req, res, next) => {
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log('Token verified successfully for user:', {
-            userId: decoded.id,
-            userName: decoded.name,
-            userRole: decoded.role
-        });
-        req.user = decoded;
+        const token = extractToken(req);
+        const decoded = jwtService.verifyToken(token, 'access');
+        
+        // Add user info to request object
+        req.user = {
+            userId: decoded.userId,
+            instanceId: decoded.instanceId,
+            roles: decoded.roles || []
+        };
+        
         next();
     } catch (error) {
-        console.error('Token verification failed:', {
-            error: error.message,
-            token: token ? '[PRESENT]' : '[MISSING]'
-        });
-        res.status(401).json({ error: 'Invalid token' });
+        next(error);
     }
 };
 
-const authorize = (roles = []) => {
+// Optional authentication - doesn't throw error if no token present
+const optionalAuth = async (req, res, next) => {
+    try {
+        const authHeader = req.headers[config.tokens.accessTokenHeader.toLowerCase()];
+        if (!authHeader) {
+            return next();
+        }
+
+        const [bearer, token] = authHeader.split(' ');
+        if (bearer !== config.tokens.bearerPrefix || !token) {
+            return next();
+        }
+
+        const decoded = jwtService.verifyToken(token, 'access');
+        req.user = {
+            userId: decoded.userId,
+            instanceId: decoded.instanceId,
+            roles: decoded.roles || []
+        };
+        
+        next();
+    } catch (error) {
+        // If token is invalid, proceed without user info
+        next();
+    }
+};
+
+// Role-based authentication middleware factory
+const requireRoles = (roles) => {
     return (req, res, next) => {
         if (!req.user) {
-            console.log('Authorization failed: No user in request');
-            return res.status(401).json({ error: 'Unauthorized' });
+            throw new AppError(401, 'AUTH008', 'Authentication required');
         }
 
-        if (roles.length && !roles.includes(req.user.role)) {
-            console.log('Authorization failed: Invalid role', {
-                userRole: req.user.role,
-                requiredRoles: roles
-            });
-            return res.status(403).json({ error: 'Forbidden' });
+        const hasRequiredRole = roles.some(role => req.user.roles.includes(role));
+        if (!hasRequiredRole) {
+            throw new AppError(403, 'AUTH009', 'Insufficient permissions');
         }
 
-        console.log('Authorization successful for user:', {
-            userId: req.user.id,
-            userName: req.user.name,
-            userRole: req.user.role
-        });
         next();
     };
 };
 
-module.exports = { authenticate, authorize };
+// Instance-based authentication middleware
+const requireInstance = (req, res, next) => {
+    if (!req.user?.instanceId) {
+        throw new AppError(401, 'AUTH010', 'Instance access required');
+    }
+    next();
+};
+
+module.exports = {
+    authenticate,
+    optionalAuth,
+    requireRoles,
+    requireInstance
+};
