@@ -1,6 +1,6 @@
 // src/controllers/event.controller.js
-const EventService = require('../services/EventService');
-const AppError = require('../utils/AppError');
+const EventService = require("../services/EventService");
+const AppError = require("../utils/AppError");
 
 class EventController {
   constructor() {
@@ -11,7 +11,12 @@ class EventController {
     try {
       return await this.eventService.list(page, limit, filters);
     } catch (error) {
-      throw new AppError(500, 'EVENT_LIST_ERROR', 'Error retrieving events', error);
+      throw new AppError(
+        500,
+        "EVENT_LIST_ERROR",
+        "Error retrieving events",
+        error
+      );
     }
   }
 
@@ -19,12 +24,17 @@ class EventController {
     try {
       const event = await this.eventService.getById(id);
       if (!event) {
-        throw new AppError(404, 'EVENT_NOT_FOUND', 'Event not found');
+        throw new AppError(404, "EVENT_NOT_FOUND", "Event not found");
       }
       return event;
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError(500, 'EVENT_FETCH_ERROR', 'Error retrieving event', error);
+      throw new AppError(
+        500,
+        "EVENT_FETCH_ERROR",
+        "Error retrieving event",
+        error
+      );
     }
   }
 
@@ -32,7 +42,12 @@ class EventController {
     try {
       return await this.eventService.create(eventData);
     } catch (error) {
-      throw new AppError(500, 'EVENT_CREATE_ERROR', 'Error creating event', error);
+      throw new AppError(
+        500,
+        "EVENT_CREATE_ERROR",
+        "Error creating event",
+        error
+      );
     }
   }
 
@@ -40,12 +55,17 @@ class EventController {
     try {
       const event = await this.eventService.update(id, eventData);
       if (!event) {
-        throw new AppError(404, 'EVENT_NOT_FOUND', 'Event not found');
+        throw new AppError(404, "EVENT_NOT_FOUND", "Event not found");
       }
       return event;
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError(500, 'EVENT_UPDATE_ERROR', 'Error updating event', error);
+      throw new AppError(
+        500,
+        "EVENT_UPDATE_ERROR",
+        "Error updating event",
+        error
+      );
     }
   }
 
@@ -53,12 +73,17 @@ class EventController {
     try {
       const result = await this.eventService.delete(id);
       if (!result) {
-        throw new AppError(404, 'EVENT_NOT_FOUND', 'Event not found');
+        throw new AppError(404, "EVENT_NOT_FOUND", "Event not found");
       }
       return result;
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError(500, 'EVENT_DELETE_ERROR', 'Error deleting event', error);
+      throw new AppError(
+        500,
+        "EVENT_DELETE_ERROR",
+        "Error deleting event",
+        error
+      );
     }
   }
 }

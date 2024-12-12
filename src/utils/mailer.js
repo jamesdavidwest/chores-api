@@ -1,6 +1,6 @@
 // src/utils/mailer.js
-const nodemailer = require('nodemailer');
-const config = require('../config/email');
+const nodemailer = require("nodemailer");
+const config = require("../config/email");
 
 class Mailer {
   constructor() {
@@ -21,7 +21,7 @@ class Mailer {
     const mailOptions = {
       from: config.from,
       to,
-      subject: 'Verify Your Email Address',
+      subject: "Verify Your Email Address",
       html: `
                 <h1>Email Verification</h1>
                 <p>Please click the link below to verify your email address:</p>
@@ -40,7 +40,7 @@ class Mailer {
     const mailOptions = {
       from: config.from,
       to,
-      subject: 'Password Reset Request',
+      subject: "Password Reset Request",
       html: `
                 <h1>Password Reset</h1>
                 <p>You requested to reset your password. Click the link below to create a new password:</p>

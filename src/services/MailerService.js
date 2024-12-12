@@ -1,12 +1,12 @@
-const nodemailer = require('nodemailer');
-const { AppError } = require('../utils/AppError');
+const nodemailer = require("nodemailer");
+const { AppError } = require("../utils/AppError");
 
 class MailerService {
   constructor() {
     this.transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT,
-      secure: process.env.SMTP_SECURE === 'true',
+      secure: process.env.SMTP_SECURE === "true",
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -17,7 +17,7 @@ class MailerService {
   async sendEmail(to, subject, html) {
     try {
       const mailOptions = {
-        from: process.env.SMTP_FROM || 'noreply@yourdomain.com',
+        from: process.env.SMTP_FROM || "noreply@yourdomain.com",
         to,
         subject,
         html,
@@ -25,7 +25,12 @@ class MailerService {
 
       await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      throw new AppError(500, 'EMAIL_SEND_ERROR', 'Failed to send email', error);
+      throw new AppError(
+        500,
+        "EMAIL_SEND_ERROR",
+        "Failed to send email",
+        error
+      );
     }
   }
 
@@ -39,7 +44,7 @@ class MailerService {
       <p>This link will expire in 1 hour.</p>
     `;
 
-    await this.sendEmail(email, 'Password Reset Request', html);
+    await this.sendEmail(email, "Password Reset Request", html);
   }
 
   async sendVerificationEmail(email, verificationToken) {
@@ -52,7 +57,7 @@ class MailerService {
       <p>This link will expire in 24 hours.</p>
     `;
 
-    await this.sendEmail(email, 'Email Verification', html);
+    await this.sendEmail(email, "Email Verification", html);
   }
 }
 

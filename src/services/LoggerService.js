@@ -1,8 +1,8 @@
-const winston = require('winston');
-require('winston-daily-rotate-file');
+const winston = require("winston");
+require("winston-daily-rotate-file");
 const { createLogger, format, transports } = winston;
 const { combine, timestamp, printf, colorize, json } = format;
-const { config, validateConfig } = require('../config/logger.config');
+const { config, validateConfig } = require("../config/logger.config");
 
 class LoggerService {
   constructor() {
@@ -17,27 +17,24 @@ class LoggerService {
       warn: 1,
       info: 2,
       http: 3,
-      debug: 4
+      debug: 4,
     };
 
     // Custom format for console output (development)
     const consoleFormat = combine(
       colorize(),
-      timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+      timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
       printf(({ timestamp, level, message, ...metadata }) => {
-        let meta = '';
+        let meta = "";
         if (Object.keys(metadata).length > 0) {
-          meta = '\n' + JSON.stringify(metadata, null, 2);
+          meta = "\n" + JSON.stringify(metadata, null, 2);
         }
         return `${timestamp} [${level}]: ${message}${meta}`;
       })
     );
 
     // JSON format for file output
-    const fileFormat = combine(
-      timestamp(),
-      json()
-    );
+    const fileFormat = combine(timestamp(), json());
 
     const loggerTransports = [];
 
@@ -46,7 +43,7 @@ class LoggerService {
       loggerTransports.push(
         new transports.Console({
           level: config.console.level,
-          format: consoleFormat
+          format: consoleFormat,
         })
       );
     }
@@ -57,12 +54,12 @@ class LoggerService {
       loggerTransports.push(
         new transports.DailyRotateFile({
           filename: `${config.file.directory}/${config.file.combined.filename}-%DATE%`,
-          datePattern: 'YYYY-MM-DD',
+          datePattern: "YYYY-MM-DD",
           level: config.file.combined.level,
           maxSize: config.file.combined.maxSize,
           maxFiles: config.file.combined.maxFiles,
           format: fileFormat,
-          zippedArchive: config.file.combined.compress
+          zippedArchive: config.file.combined.compress,
         })
       );
 
@@ -70,12 +67,12 @@ class LoggerService {
       loggerTransports.push(
         new transports.DailyRotateFile({
           filename: `${config.file.directory}/${config.file.error.filename}-%DATE%`,
-          datePattern: 'YYYY-MM-DD',
-          level: 'error',
+          datePattern: "YYYY-MM-DD",
+          level: "error",
           maxSize: config.file.error.maxSize,
           maxFiles: config.file.error.maxFiles,
           format: fileFormat,
-          zippedArchive: config.file.error.compress
+          zippedArchive: config.file.error.compress,
         })
       );
     }
@@ -84,7 +81,7 @@ class LoggerService {
       levels: logLevels,
       level: config.level,
       transports: loggerTransports,
-      exitOnError: false
+      exitOnError: false,
     });
   }
 
@@ -124,22 +121,22 @@ class LoggerService {
       statusCode: res.statusCode,
       duration: `${duration}ms`,
       ip: req.ip,
-      userAgent: req.get('user-agent'),
-      userId: req.user?.id
+      userAgent: req.get("user-agent"),
+      userId: req.user?.id,
     };
 
     if (config.request.includeBody && !this.containsSensitiveData(req.body)) {
       metadata.body = req.body;
     }
 
-    const level = res.statusCode >= 400 ? 'warn' : 'http';
+    const level = res.statusCode >= 400 ? "warn" : "http";
     this.logger[level](`${req.method} ${req.originalUrl}`, metadata);
   }
 
   logError(error, req = null) {
     const errorMeta = {
       error: this.formatError(error),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
     if (req) {
@@ -148,7 +145,7 @@ class LoggerService {
         method: req.method,
         path: req.originalUrl,
         userId: req.user?.id,
-        ip: req.ip
+        ip: req.ip,
       };
     }
 
@@ -159,7 +156,7 @@ class LoggerService {
     const metadata = {
       operation,
       duration: `${duration}ms`,
-      success
+      success,
     };
 
     if (!success && error) {
@@ -167,20 +164,20 @@ class LoggerService {
     }
 
     if (duration > config.performance.slowQueryThreshold) {
-      this.warn('Slow database query detected', metadata);
+      this.warn("Slow database query detected", metadata);
     } else {
-      this.debug('Database operation', metadata);
+      this.debug("Database operation", metadata);
     }
   }
 
   logAudit(action, userId, details = {}) {
     if (!config.audit.enabled || !config.audit.events.includes(action)) return;
 
-    this.info('Audit event', {
+    this.info("Audit event", {
       action,
       userId,
       details,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 
@@ -189,21 +186,21 @@ class LoggerService {
     return {
       name: error.name,
       message: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
       code: error.code,
-      statusCode: error.statusCode
+      statusCode: error.statusCode,
     };
   }
 
   shouldSkipPath(path) {
-    return config.request.excludePaths.some(excludePath => 
+    return config.request.excludePaths.some((excludePath) =>
       path.startsWith(excludePath)
     );
   }
 
   containsSensitiveData(obj) {
     if (!obj) return false;
-    return config.request.sensitiveFields.some(field => 
+    return config.request.sensitiveFields.some((field) =>
       Object.keys(obj).includes(field)
     );
   }

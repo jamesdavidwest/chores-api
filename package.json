@@ -19,7 +19,9 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\"",
-    "format:check": "prettier --check \"src/**/*.js\" \"tests/**/*.js\""
+    "format:check": "prettier --check \"src/**/*.js\" \"tests/**/*.js\"",
+    "docs:generate": "node scripts/generate-docs.js",
+    "docs:serve": "node scripts/serve-docs.js"
   },
   "keywords": [
     "backend",

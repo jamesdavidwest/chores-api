@@ -1,1 +1,0 @@
-INSERT INTO frequency_types (name) VALUES ('once');

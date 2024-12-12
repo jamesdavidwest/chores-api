@@ -1,15 +1,15 @@
 // src/routes/index.js
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
 // Import route modules
-const eventRoutes = require('./api/events.routes');
-const userRoutes = require('./api/users.routes');
-const instanceRoutes = require('./api/instances.routes');
+const eventRoutes = require("./api/events.routes");
+const userRoutes = require("./api/users.routes");
+const instanceRoutes = require("./api/instances.routes");
 
 // Import middleware
-const authMiddleware = require('../middleware/auth');
-const errorHandler = require('../middleware/errorHandler');
+const authMiddleware = require("../middleware/auth");
+const errorHandler = require("../middleware/errorHandler");
 
 // API versioning function
 const createVersionedRouter = (version) => {
@@ -22,15 +22,15 @@ const createVersionedRouter = (version) => {
   });
 
   // Mount routes
-  versionedRouter.use('/events', authMiddleware, eventRoutes);
-  versionedRouter.use('/users', userRoutes); // Some user routes may not require auth
-  versionedRouter.use('/instances', authMiddleware, instanceRoutes);
+  versionedRouter.use("/events", authMiddleware, eventRoutes);
+  versionedRouter.use("/users", userRoutes); // Some user routes may not require auth
+  versionedRouter.use("/instances", authMiddleware, instanceRoutes);
 
   return versionedRouter;
 };
 
 // Mount versioned routes
-router.use('/v1', createVersionedRouter('v1'));
+router.use("/v1", createVersionedRouter("v1"));
 
 // Error handling - should be last
 router.use(errorHandler);

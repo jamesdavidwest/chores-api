@@ -1,6 +1,6 @@
-const rateLimit = require('express-rate-limit');
-const { ErrorTypes } = require('../utils/errorTypes');
-const AppError = require('../utils/AppError');
+const rateLimit = require("express-rate-limit");
+const { ErrorTypes } = require("../utils/errorTypes");
+const AppError = require("../utils/AppError");
 
 // Create different rate limiters for different purposes
 const createRateLimiter = (options = {}) => {
@@ -8,12 +8,17 @@ const createRateLimiter = (options = {}) => {
     windowMs: options.windowMs || 15 * 60 * 1000, // Default: 15 minutes
     max: options.max || 100, // Default: 100 requests per windowMs
     handler: (req, res) => {
-      const error = new AppError(ErrorTypes.RATE_LIMIT_EXCEEDED, 'RateLimiter', 'handler', {
-        ip: req.ip,
-        endpoint: req.originalUrl,
-        window: options.windowMs / 1000 / 60 + ' minutes',
-        limit: options.max,
-      });
+      const error = new AppError(
+        ErrorTypes.RATE_LIMIT_EXCEEDED,
+        "RateLimiter",
+        "handler",
+        {
+          ip: req.ip,
+          endpoint: req.originalUrl,
+          window: options.windowMs / 1000 / 60 + " minutes",
+          limit: options.max,
+        }
+      );
 
       res.status(error.statusCode).json({
         success: false,

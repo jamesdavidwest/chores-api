@@ -1,8 +1,8 @@
 // src/controllers/user.controller.js
-const UserService = require('../services/UserService');
-const AppError = require('../utils/AppError');
-const { generateTokens } = require('../utils/auth');
-const mailerService = require('../services/MailerService');
+const UserService = require("../services/UserService");
+const AppError = require("../utils/AppError");
+const { generateTokens } = require("../utils/auth");
+const mailerService = require("../services/MailerService");
 
 class UserController {
   constructor() {
@@ -13,7 +13,11 @@ class UserController {
     try {
       const existingUser = await this.userService.findByEmail(userData.email);
       if (existingUser) {
-        throw new AppError(409, 'USER_EXISTS', 'User with this email already exists');
+        throw new AppError(
+          409,
+          "USER_EXISTS",
+          "User with this email already exists"
+        );
       }
 
       const user = await this.userService.create(userData);
@@ -28,7 +32,12 @@ class UserController {
       };
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError(500, 'REGISTRATION_ERROR', 'Error during registration', error);
+      throw new AppError(
+        500,
+        "REGISTRATION_ERROR",
+        "Error during registration",
+        error
+      );
     }
   }
 
@@ -40,7 +49,11 @@ class UserController {
       );
 
       if (!user) {
-        throw new AppError(401, 'INVALID_CREDENTIALS', 'Invalid email or password');
+        throw new AppError(
+          401,
+          "INVALID_CREDENTIALS",
+          "Invalid email or password"
+        );
       }
 
       const { password, ...userWithoutPassword } = user; // eslint-disable-line no-unused-vars
@@ -54,7 +67,7 @@ class UserController {
       };
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError(500, 'LOGIN_ERROR', 'Error during login', error);
+      throw new AppError(500, "LOGIN_ERROR", "Error during login", error);
     }
   }
 
@@ -62,7 +75,12 @@ class UserController {
     try {
       return await this.userService.list(page, limit, filters);
     } catch (error) {
-      throw new AppError(500, 'USER_LIST_ERROR', 'Error retrieving users', error);
+      throw new AppError(
+        500,
+        "USER_LIST_ERROR",
+        "Error retrieving users",
+        error
+      );
     }
   }
 
@@ -70,14 +88,19 @@ class UserController {
     try {
       const user = await this.userService.getById(id);
       if (!user) {
-        throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
+        throw new AppError(404, "USER_NOT_FOUND", "User not found");
       }
 
       const { password, ...userWithoutPassword } = user; // eslint-disable-line no-unused-vars
       return userWithoutPassword;
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError(500, 'USER_FETCH_ERROR', 'Error retrieving user', error);
+      throw new AppError(
+        500,
+        "USER_FETCH_ERROR",
+        "Error retrieving user",
+        error
+      );
     }
   }
 
@@ -87,20 +110,25 @@ class UserController {
       if (userData.email) {
         const existingUser = await this.userService.findByEmail(userData.email);
         if (existingUser && existingUser.id !== id) {
-          throw new AppError(409, 'EMAIL_EXISTS', 'Email already in use');
+          throw new AppError(409, "EMAIL_EXISTS", "Email already in use");
         }
       }
 
       const user = await this.userService.update(id, userData);
       if (!user) {
-        throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
+        throw new AppError(404, "USER_NOT_FOUND", "User not found");
       }
 
       const { password, ...userWithoutPassword } = user; // eslint-disable-line no-unused-vars
       return userWithoutPassword;
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError(500, 'USER_UPDATE_ERROR', 'Error updating user', error);
+      throw new AppError(
+        500,
+        "USER_UPDATE_ERROR",
+        "Error updating user",
+        error
+      );
     }
   }
 
@@ -108,12 +136,17 @@ class UserController {
     try {
       const result = await this.userService.delete(id);
       if (!result) {
-        throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
+        throw new AppError(404, "USER_NOT_FOUND", "User not found");
       }
       return result;
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError(500, 'USER_DELETE_ERROR', 'Error deleting user', error);
+      throw new AppError(
+        500,
+        "USER_DELETE_ERROR",
+        "Error deleting user",
+        error
+      );
     }
   }
 
@@ -122,7 +155,7 @@ class UserController {
       await this.userService.invalidateTokens(userId);
       return true;
     } catch (error) {
-      throw new AppError(500, 'LOGOUT_ERROR', 'Error during logout', error);
+      throw new AppError(500, "LOGOUT_ERROR", "Error during logout", error);
     }
   }
 
@@ -130,12 +163,21 @@ class UserController {
     try {
       const tokens = await this.userService.refreshToken(refreshToken);
       if (!tokens) {
-        throw new AppError(401, 'INVALID_REFRESH_TOKEN', 'Invalid refresh token');
+        throw new AppError(
+          401,
+          "INVALID_REFRESH_TOKEN",
+          "Invalid refresh token"
+        );
       }
       return tokens;
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError(500, 'TOKEN_REFRESH_ERROR', 'Error refreshing token', error);
+      throw new AppError(
+        500,
+        "TOKEN_REFRESH_ERROR",
+        "Error refreshing token",
+        error
+      );
     }
   }
 
@@ -143,13 +185,20 @@ class UserController {
     try {
       const user = await this.userService.findByEmail(email);
       if (user) {
-        const resetToken = await this.userService.generatePasswordResetToken(user.id);
+        const resetToken = await this.userService.generatePasswordResetToken(
+          user.id
+        );
         await mailerService.sendPasswordResetEmail(email, resetToken);
       }
       // Always return success to prevent email enumeration
       return true;
     } catch (error) {
-      throw new AppError(500, 'PASSWORD_RESET_ERROR', 'Error initiating password reset', error);
+      throw new AppError(
+        500,
+        "PASSWORD_RESET_ERROR",
+        "Error initiating password reset",
+        error
+      );
     }
   }
 
@@ -157,7 +206,11 @@ class UserController {
     try {
       const userId = await this.userService.validatePasswordResetToken(token);
       if (!userId) {
-        throw new AppError(400, 'INVALID_TOKEN', 'Invalid or expired password reset token');
+        throw new AppError(
+          400,
+          "INVALID_TOKEN",
+          "Invalid or expired password reset token"
+        );
       }
 
       await this.userService.updatePassword(userId, newPassword);
@@ -165,15 +218,25 @@ class UserController {
       return true;
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError(500, 'PASSWORD_RESET_ERROR', 'Error resetting password', error);
+      throw new AppError(
+        500,
+        "PASSWORD_RESET_ERROR",
+        "Error resetting password",
+        error
+      );
     }
   }
 
   async verifyEmail(token) {
     try {
-      const userId = await this.userService.validateEmailVerificationToken(token);
+      const userId =
+        await this.userService.validateEmailVerificationToken(token);
       if (!userId) {
-        throw new AppError(400, 'INVALID_TOKEN', 'Invalid or expired email verification token');
+        throw new AppError(
+          400,
+          "INVALID_TOKEN",
+          "Invalid or expired email verification token"
+        );
       }
 
       await this.userService.markEmailAsVerified(userId);
@@ -181,7 +244,12 @@ class UserController {
       return true;
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError(500, 'EMAIL_VERIFICATION_ERROR', 'Error verifying email', error);
+      throw new AppError(
+        500,
+        "EMAIL_VERIFICATION_ERROR",
+        "Error verifying email",
+        error
+      );
     }
   }
 
@@ -189,7 +257,8 @@ class UserController {
     try {
       const user = await this.userService.findByEmail(email);
       if (user && !user.emailVerified) {
-        const verificationToken = await this.userService.generateEmailVerificationToken(user.id);
+        const verificationToken =
+          await this.userService.generateEmailVerificationToken(user.id);
         await mailerService.sendVerificationEmail(email, verificationToken);
       }
       // Always return success to prevent email enumeration
@@ -197,8 +266,8 @@ class UserController {
     } catch (error) {
       throw new AppError(
         500,
-        'VERIFICATION_EMAIL_ERROR',
-        'Error sending verification email',
+        "VERIFICATION_EMAIL_ERROR",
+        "Error sending verification email",
         error
       );
     }

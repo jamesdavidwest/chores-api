@@ -1,12 +1,12 @@
 // src/config/database.js
-require('dotenv').config();
+require("dotenv").config();
 
 const getConnectionConfig = () => {
-  const dbType = process.env.DB_TYPE?.toLowerCase() || 'sqlite';
+  const dbType = process.env.DB_TYPE?.toLowerCase() || "sqlite";
 
-  if (dbType === 'postgres') {
+  if (dbType === "postgres") {
     return {
-      host: process.env.DB_HOST || 'localhost',
+      host: process.env.DB_HOST || "localhost",
       port: process.env.DB_PORT || 5432,
       database: process.env.DB_NAME,
       user: process.env.DB_USER,
@@ -16,12 +16,15 @@ const getConnectionConfig = () => {
 
   // SQLite configuration
   return {
-    filename: process.env.DB_PATH || './data/database.sqlite',
+    filename: process.env.DB_PATH || "./data/database.sqlite",
   };
 };
 
 const development = {
-  client: process.env.DB_TYPE?.toLowerCase() === 'postgres' ? 'postgresql' : 'sqlite3',
+  client:
+    process.env.DB_TYPE?.toLowerCase() === "postgres"
+      ? "postgresql"
+      : "sqlite3",
   connection: getConnectionConfig(),
   useNullAsDefault: true,
   pool: {
@@ -29,18 +32,18 @@ const development = {
     max: 10,
   },
   migrations: {
-    directory: './src/migrations',
-    tableName: 'knex_migrations',
+    directory: "./src/migrations",
+    tableName: "knex_migrations",
   },
   seeds: {
-    directory: './src/seeds',
+    directory: "./src/seeds",
   },
 };
 
 const production = {
-  client: 'postgresql',
+  client: "postgresql",
   connection: {
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || "localhost",
     port: process.env.DB_PORT || 5432,
     database: process.env.DB_NAME,
     user: process.env.DB_USER,
@@ -51,26 +54,26 @@ const production = {
     max: 10,
   },
   migrations: {
-    directory: './src/migrations',
-    tableName: 'knex_migrations',
+    directory: "./src/migrations",
+    tableName: "knex_migrations",
   },
   seeds: {
-    directory: './src/seeds',
+    directory: "./src/seeds",
   },
 };
 
 const testing = {
-  client: 'sqlite3',
+  client: "sqlite3",
   connection: {
-    filename: ':memory:',
+    filename: ":memory:",
   },
   useNullAsDefault: true,
   migrations: {
-    directory: './src/migrations',
-    tableName: 'knex_migrations',
+    directory: "./src/migrations",
+    tableName: "knex_migrations",
   },
   seeds: {
-    directory: './src/seeds',
+    directory: "./src/seeds",
   },
 };
 

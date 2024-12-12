@@ -1,232 +1,232 @@
 const ErrorTypes = {
   // Authentication & Authorization Errors (400-403)
   INVALID_CREDENTIALS: {
-    code: 'AUTH001',
+    code: "AUTH001",
     statusCode: 401,
-    defaultMessage: 'Invalid credentials provided'
+    defaultMessage: "Invalid credentials provided",
   },
   TOKEN_EXPIRED: {
-    code: 'AUTH002',
+    code: "AUTH002",
     statusCode: 401,
-    defaultMessage: 'Authentication token has expired'
+    defaultMessage: "Authentication token has expired",
   },
   TOKEN_INVALID: {
-    code: 'AUTH003',
+    code: "AUTH003",
     statusCode: 401,
-    defaultMessage: 'Invalid authentication token'
+    defaultMessage: "Invalid authentication token",
   },
   UNAUTHORIZED: {
-    code: 'AUTH004',
+    code: "AUTH004",
     statusCode: 401,
-    defaultMessage: 'Unauthorized access'
+    defaultMessage: "Unauthorized access",
   },
   FORBIDDEN: {
-    code: 'AUTH005',
+    code: "AUTH005",
     statusCode: 403,
-    defaultMessage: 'Forbidden access'
+    defaultMessage: "Forbidden access",
   },
 
   // Resource Errors (404)
   NOT_FOUND: {
-    code: 'RES001',
+    code: "RES001",
     statusCode: 404,
-    defaultMessage: 'Resource not found'
+    defaultMessage: "Resource not found",
   },
   RESOURCE_ARCHIVED: {
-    code: 'RES002',
+    code: "RES002",
     statusCode: 404,
-    defaultMessage: 'Resource is archived'
+    defaultMessage: "Resource is archived",
   },
   PARENT_NOT_FOUND: {
-    code: 'RES003',
+    code: "RES003",
     statusCode: 404,
-    defaultMessage: 'Parent resource not found'
+    defaultMessage: "Parent resource not found",
   },
   CHILD_NOT_FOUND: {
-    code: 'RES004',
+    code: "RES004",
     statusCode: 404,
-    defaultMessage: 'Child resource not found'
+    defaultMessage: "Child resource not found",
   },
 
   // Validation Errors (400)
   VALIDATION_ERROR: {
-    code: 'VAL001',
+    code: "VAL001",
     statusCode: 400,
-    defaultMessage: 'Validation error'
+    defaultMessage: "Validation error",
   },
   INVALID_INPUT: {
-    code: 'VAL002',
+    code: "VAL002",
     statusCode: 400,
-    defaultMessage: 'Invalid input provided'
+    defaultMessage: "Invalid input provided",
   },
   DUPLICATE_ENTRY: {
-    code: 'VAL003',
+    code: "VAL003",
     statusCode: 400,
-    defaultMessage: 'Duplicate entry'
+    defaultMessage: "Duplicate entry",
   },
   INVALID_STATUS_TRANSITION: {
-    code: 'VAL004',
+    code: "VAL004",
     statusCode: 400,
-    defaultMessage: 'Invalid status transition'
+    defaultMessage: "Invalid status transition",
   },
   INVALID_RELATIONSHIP: {
-    code: 'VAL005',
+    code: "VAL005",
     statusCode: 400,
-    defaultMessage: 'Invalid relationship between resources'
+    defaultMessage: "Invalid relationship between resources",
   },
   INVALID_METADATA: {
-    code: 'VAL006',
+    code: "VAL006",
     statusCode: 400,
-    defaultMessage: 'Invalid metadata format'
+    defaultMessage: "Invalid metadata format",
   },
   MISSING_REQUIRED_FIELD: {
-    code: 'VAL007',
+    code: "VAL007",
     statusCode: 400,
-    defaultMessage: 'Required field missing'
+    defaultMessage: "Required field missing",
   },
   INVALID_DATE_RANGE: {
-    code: 'VAL008',
+    code: "VAL008",
     statusCode: 400,
-    defaultMessage: 'Invalid date range'
+    defaultMessage: "Invalid date range",
   },
 
   // Database Errors (500)
   DB_ERROR: {
-    code: 'DB001',
+    code: "DB001",
     statusCode: 500,
-    defaultMessage: 'Database error occurred'
+    defaultMessage: "Database error occurred",
   },
   TRANSACTION_ERROR: {
-    code: 'DB002',
+    code: "DB002",
     statusCode: 500,
-    defaultMessage: 'Transaction failed'
+    defaultMessage: "Transaction failed",
   },
   DB_CONSTRAINT_VIOLATION: {
-    code: 'DB003',
+    code: "DB003",
     statusCode: 500,
-    defaultMessage: 'Database constraint violation'
+    defaultMessage: "Database constraint violation",
   },
   DB_UNIQUE_VIOLATION: {
-    code: 'DB004',
+    code: "DB004",
     statusCode: 500,
-    defaultMessage: 'Unique constraint violation'
+    defaultMessage: "Unique constraint violation",
   },
   DB_FOREIGN_KEY_VIOLATION: {
-    code: 'DB005',
+    code: "DB005",
     statusCode: 500,
-    defaultMessage: 'Foreign key constraint violation'
+    defaultMessage: "Foreign key constraint violation",
   },
   DB_CONNECTION_ERROR: {
-    code: 'DB006',
+    code: "DB006",
     statusCode: 500,
-    defaultMessage: 'Database connection error'
+    defaultMessage: "Database connection error",
   },
   DEADLOCK_DETECTED: {
-    code: 'DB007',
+    code: "DB007",
     statusCode: 500,
-    defaultMessage: 'Database deadlock detected'
+    defaultMessage: "Database deadlock detected",
   },
 
   // Server Errors (500)
   INTERNAL_ERROR: {
-    code: 'SRV001',
+    code: "SRV001",
     statusCode: 500,
-    defaultMessage: 'Internal server error'
+    defaultMessage: "Internal server error",
   },
   SERVICE_UNAVAILABLE: {
-    code: 'SRV002',
+    code: "SRV002",
     statusCode: 503,
-    defaultMessage: 'Service temporarily unavailable'
+    defaultMessage: "Service temporarily unavailable",
   },
   RATE_LIMIT_EXCEEDED: {
-    code: 'SRV003',
+    code: "SRV003",
     statusCode: 429,
-    defaultMessage: 'Rate limit exceeded'
+    defaultMessage: "Rate limit exceeded",
   },
   REQUEST_TIMEOUT: {
-    code: 'SRV004',
+    code: "SRV004",
     statusCode: 408,
-    defaultMessage: 'Request timeout'
+    defaultMessage: "Request timeout",
   },
   INVALID_JSON: {
-    code: 'SRV005',
+    code: "SRV005",
     statusCode: 400,
-    defaultMessage: 'Invalid JSON format'
+    defaultMessage: "Invalid JSON format",
   },
 
   // Business Logic Errors (400)
   BUSINESS_RULE_VIOLATION: {
-    code: 'BUS001',
+    code: "BUS001",
     statusCode: 400,
-    defaultMessage: 'Business rule violation'
+    defaultMessage: "Business rule violation",
   },
   INSUFFICIENT_PERMISSIONS: {
-    code: 'BUS002',
+    code: "BUS002",
     statusCode: 403,
-    defaultMessage: 'Insufficient permissions for operation'
+    defaultMessage: "Insufficient permissions for operation",
   },
   RESOURCE_LOCKED: {
-    code: 'BUS003',
+    code: "BUS003",
     statusCode: 423,
-    defaultMessage: 'Resource is locked'
+    defaultMessage: "Resource is locked",
   },
   CONCURRENT_MODIFICATION: {
-    code: 'BUS004',
+    code: "BUS004",
     statusCode: 409,
-    defaultMessage: 'Resource was modified by another request'
-  }
+    defaultMessage: "Resource was modified by another request",
+  },
 };
 
 // Helper function to format error messages with context
 const formatErrorMessage = (errorType, service, method, details) => {
   const baseInfo = `${service}.${method}`;
   const timestamp = new Date().toISOString();
-  
+
   // Build details string
-  let detailsStr = '';
+  let detailsStr = "";
   if (details) {
     detailsStr = Object.entries(details)
       .filter(([_, value]) => value !== undefined)
       .map(([key, value]) => {
-        if (typeof value === 'object') {
+        if (typeof value === "object") {
           return `${key}: ${JSON.stringify(value)}`;
         }
         return `${key}: ${value}`;
       })
-      .join(', ');
+      .join(", ");
   }
 
   // Construct specific message based on error type and context
   switch (errorType.code) {
-    case 'AUTH001':
-      return `Authentication failed in ${baseInfo}: ${details?.reason || 'Invalid credentials'}`;
-    
-    case 'RES001':
-      return `${details?.resource || 'Resource'} not found in ${baseInfo}: ID ${details?.id} does not exist`;
-    
-    case 'VAL001':
-      return `Validation failed in ${baseInfo}: ${details?.message}${detailsStr ? ` (${detailsStr})` : ''}`;
-    
-    case 'DB001':
-      return `Database error in ${baseInfo}: Failed to ${details?.action || 'perform operation'} on ${details?.resource || 'resource'}${detailsStr ? ` (${detailsStr})` : ''}`;
-    
-    case 'DB002':
-      return `Transaction failed in ${baseInfo}: ${details?.message || 'Operation could not be completed'}${detailsStr ? ` (${detailsStr})` : ''}`;
-    
-    case 'VAL003':
-      return `Duplicate entry in ${baseInfo}: ${details?.constraint} violation${detailsStr ? ` (${detailsStr})` : ''}`;
-    
-    case 'BUS001':
-      return `Business rule violation in ${baseInfo}: ${details?.rule || 'Operation not allowed'}${detailsStr ? ` (${detailsStr})` : ''}`;
-    
+    case "AUTH001":
+      return `Authentication failed in ${baseInfo}: ${details?.reason || "Invalid credentials"}`;
+
+    case "RES001":
+      return `${details?.resource || "Resource"} not found in ${baseInfo}: ID ${details?.id} does not exist`;
+
+    case "VAL001":
+      return `Validation failed in ${baseInfo}: ${details?.message}${detailsStr ? ` (${detailsStr})` : ""}`;
+
+    case "DB001":
+      return `Database error in ${baseInfo}: Failed to ${details?.action || "perform operation"} on ${details?.resource || "resource"}${detailsStr ? ` (${detailsStr})` : ""}`;
+
+    case "DB002":
+      return `Transaction failed in ${baseInfo}: ${details?.message || "Operation could not be completed"}${detailsStr ? ` (${detailsStr})` : ""}`;
+
+    case "VAL003":
+      return `Duplicate entry in ${baseInfo}: ${details?.constraint} violation${detailsStr ? ` (${detailsStr})` : ""}`;
+
+    case "BUS001":
+      return `Business rule violation in ${baseInfo}: ${details?.rule || "Operation not allowed"}${detailsStr ? ` (${detailsStr})` : ""}`;
+
     // Add more specific formatters as needed
-    
+
     default:
-      return `${errorType.defaultMessage} in ${baseInfo}${detailsStr ? ` (${detailsStr})` : ''}`;
+      return `${errorType.defaultMessage} in ${baseInfo}${detailsStr ? ` (${detailsStr})` : ""}`;
   }
 };
 
 module.exports = {
   ErrorTypes,
-  formatErrorMessage
+  formatErrorMessage,
 };

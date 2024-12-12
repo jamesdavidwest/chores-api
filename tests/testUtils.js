@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const DatabaseService = require('../src/services/DatabaseService');
+const jwt = require("jsonwebtoken");
+const DatabaseService = require("../src/services/DatabaseService");
 
 const testUtils = {
   // Database utilities
@@ -11,23 +11,21 @@ const testUtils = {
   async createTestUser(userData = {}) {
     const db = DatabaseService.getInstance();
     const defaultUser = {
-      email: 'test@example.com',
-      password: '$2a$10$testHashedPassword',
-      role: 'user',
+      email: "test@example.com",
+      password: "$2a$10$testHashedPassword",
+      role: "user",
       ...userData,
     };
 
-    const [userId] = await db('users').insert(defaultUser);
+    const [userId] = await db("users").insert(defaultUser);
     return userId;
   },
 
   // Authentication utilities
-  generateTestToken(userId, role = 'user') {
-    return jwt.sign(
-      { id: userId, role },
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
+  generateTestToken(userId, role = "user") {
+    return jwt.sign({ id: userId, role }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
   },
 
   // Request helpers
@@ -39,8 +37,8 @@ const testUtils = {
   generateMockUser(overrides = {}) {
     return {
       email: `test-${Date.now()}@example.com`,
-      password: 'TestPassword123!',
-      role: 'user',
+      password: "TestPassword123!",
+      role: "user",
       ...overrides,
     };
   },
@@ -48,7 +46,7 @@ const testUtils = {
   generateMockEvent(overrides = {}) {
     return {
       title: `Test Event ${Date.now()}`,
-      description: 'Test description',
+      description: "Test description",
       startDate: new Date().toISOString(),
       endDate: new Date(Date.now() + 86400000).toISOString(), // +1 day
       ...overrides,

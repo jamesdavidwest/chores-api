@@ -18,12 +18,14 @@ A production-ready backend boilerplate with comprehensive features and best prac
 ### Development
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/yourusername/backend-boiler.git
    cd backend-boiler
    ```
 
 2. Copy and configure environment variables:
+
    ```bash
    cp .env.example .env
    ```
@@ -38,6 +40,7 @@ The API will be available at http://localhost:3000.
 ### Production
 
 1. Build and run using production configuration:
+
    ```bash
    # Build production image
    docker build -t backend-boiler:latest .
@@ -76,16 +79,19 @@ For detailed Docker documentation, see [DOCKER.md](docs/DOCKER.md).
 ### Without Docker
 
 1. Prerequisites:
+
    - Node.js 20.x
    - npm 9.x
    - SQLite or PostgreSQL
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Run migrations:
+
    ```bash
    npm run migrate
    ```

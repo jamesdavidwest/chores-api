@@ -1,11 +1,11 @@
 // src/routes/auth.routes.js
 
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const authController = require('../controllers/auth.controller');
-const { authenticate } = require('../middleware/auth');
-const { validate } = require('../middleware/validation');
-const schemas = require('../schemas/validation.schemas');
+const authController = require("../controllers/auth.controller");
+const { authenticate } = require("../middleware/auth");
+const { validate } = require("../middleware/validation");
+const schemas = require("../schemas/validation.schemas");
 
 /**
  * @swagger
@@ -127,7 +127,11 @@ const schemas = require('../schemas/validation.schemas');
  *                 code: INVALID_CREDENTIALS
  *                 message: Invalid credentials
  */
-router.post('/login', validate(schemas.login), authController.login.bind(authController));
+router.post(
+  "/login",
+  validate(schemas.login),
+  authController.login.bind(authController)
+);
 
 /**
  * @swagger
@@ -170,7 +174,7 @@ router.post('/login', validate(schemas.login), authController.login.bind(authCon
  *                 code: REFRESH_TOKEN_MISSING
  *                 message: Refresh token not found
  */
-router.post('/refresh', authController.refresh.bind(authController));
+router.post("/refresh", authController.refresh.bind(authController));
 
 /**
  * @swagger
@@ -204,7 +208,11 @@ router.post('/refresh', authController.refresh.bind(authController));
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/logout', authenticate, authController.logout.bind(authController));
+router.post(
+  "/logout",
+  authenticate,
+  authController.logout.bind(authController)
+);
 
 /**
  * @swagger
@@ -256,7 +264,7 @@ router.post('/logout', authenticate, authController.logout.bind(authController))
  *                 message: Current password is incorrect
  */
 router.post(
-  '/change-password',
+  "/change-password",
   authenticate,
   validate(schemas.changePassword),
   authController.changePassword.bind(authController)

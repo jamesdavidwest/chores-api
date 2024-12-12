@@ -3,6 +3,7 @@
 ## Overview
 
 This project uses Docker for both development and production environments. The setup includes:
+
 - Multi-stage production builds
 - Development environment with hot-reloading
 - PostgreSQL for testing/production
@@ -31,6 +32,7 @@ WORKDIR /usr/src/app
 ```
 
 Key features:
+
 - Multi-stage build to minimize final image size
 - Production-only dependencies
 - Non-root user for security
@@ -48,6 +50,7 @@ WORKDIR /usr/src/app
 ```
 
 Key features:
+
 - Hot-reloading enabled
 - Development dependencies included
 - Source code mounting
@@ -60,7 +63,7 @@ Key features:
 The docker-compose.yml file orchestrates the development environment:
 
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   api:
     build:
@@ -72,6 +75,7 @@ services:
 ### Services
 
 1. API Service:
+
    - Development build
    - Volume mounts for source code
    - Environment variable configuration
@@ -91,6 +95,7 @@ services:
 ### Volumes
 
 1. Source Code:
+
    - .:/usr/src/app
    - /usr/src/app/node_modules (prevented from being overwritten)
 
@@ -100,6 +105,7 @@ services:
 ## Environment Configuration
 
 ### Development
+
 ```env
 NODE_ENV=development
 PORT=3000
@@ -117,6 +123,7 @@ RATE_LIMIT_MAX=100
 ```
 
 ### Production
+
 ```env
 NODE_ENV=production
 PORT=3000
@@ -133,11 +140,13 @@ DB_PASSWORD=<secure-password>
 ### Development
 
 1. Start the development environment:
+
    ```bash
    docker compose up
    ```
 
 2. Access services:
+
    - API: http://localhost:3000
    - Debug: localhost:9229
    - PostgreSQL: localhost:5432
@@ -150,6 +159,7 @@ DB_PASSWORD=<secure-password>
 ### Production
 
 1. Build production image:
+
    ```bash
    docker build -t backend-boiler:latest .
    ```
@@ -168,16 +178,19 @@ DB_PASSWORD=<secure-password>
 ## Security Considerations
 
 1. Non-root User:
+
    - All services run as non-root users
    - Minimal permissions granted
    - Secure volume ownership
 
 2. Multi-stage Builds:
+
    - Minimal production image
    - Only necessary dependencies included
    - No build tools in production
 
 3. Environment Separation:
+
    - Development and production configurations isolated
    - Separate environment files
    - No development tools in production
@@ -190,11 +203,13 @@ DB_PASSWORD=<secure-password>
 ## Debugging
 
 1. Access Container Shell:
+
    ```bash
    docker compose exec api sh
    ```
 
 2. View Logs:
+
    ```bash
    docker compose logs -f [service]
    ```
@@ -207,16 +222,20 @@ DB_PASSWORD=<secure-password>
 ## Common Issues
 
 1. Node Modules Volume:
+
    - Issue: Module not found errors
    - Solution: Remove node_modules volume and rebuild
+
    ```bash
    docker compose down -v
    docker compose up --build
    ```
 
 2. Permission Issues:
+
    - Issue: Unable to write to logs/data directories
    - Solution: Check volume permissions and ownership
+
    ```bash
    docker compose exec api ls -la /usr/src/app/logs
    ```
@@ -231,18 +250,21 @@ DB_PASSWORD=<secure-password>
 ## Best Practices
 
 1. Image Building:
+
    - Use specific version tags
    - Minimize layer count
    - Optimize caching
    - Remove unnecessary files
 
 2. Development Workflow:
+
    - Use volume mounts for code
    - Enable hot-reloading
    - Configure source maps
    - Set up debugging
 
 3. Production Deployment:
+
    - Use multi-stage builds
    - Implement health checks
    - Configure logging

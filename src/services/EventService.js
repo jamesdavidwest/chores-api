@@ -1,12 +1,12 @@
-const databaseService = require('./DatabaseService');
-const AppError = require('../utils/AppError');
-const { ErrorTypes } = require('../utils/errorTypes');
+const databaseService = require("./DatabaseService");
+const AppError = require("../utils/AppError");
+const { ErrorTypes } = require("../utils/errorTypes");
 
 class EventService {
   constructor() {
     this.db = databaseService.getKnex();
-    this.tableName = 'events';
-    this.serviceName = 'EventService';
+    this.tableName = "events";
+    this.serviceName = "EventService";
   }
 
   /**
@@ -16,11 +16,13 @@ class EventService {
    */
   async createEvent(eventData) {
     try {
-      const [event] = await this.db(this.tableName).insert(eventData).returning('*');
+      const [event] = await this.db(this.tableName)
+        .insert(eventData)
+        .returning("*");
 
       return event;
     } catch (error) {
-      throw this._handleError(error, 'createEvent', { eventData });
+      throw this._handleError(error, "createEvent", { eventData });
     }
   }
 
@@ -37,7 +39,7 @@ class EventService {
         events.map((event) =>
           trx(this.tableName)
             .insert(event)
-            .returning('*')
+            .returning("*")
             .then(([result]) => result)
         )
       );
@@ -46,7 +48,7 @@ class EventService {
       return createdEvents;
     } catch (error) {
       await trx.rollback();
-      throw this._handleError(error, 'createManyEvents', {
+      throw this._handleError(error, "createManyEvents", {
         eventCount: events.length,
         failedEvent: error.event,
       });
@@ -63,15 +65,20 @@ class EventService {
       const event = await this.db(this.tableName).where({ id }).first();
 
       if (!event) {
-        throw new AppError(ErrorTypes.NOT_FOUND, this.serviceName, 'getEventById', {
-          resource: 'Event',
-          id: id,
-        });
+        throw new AppError(
+          ErrorTypes.NOT_FOUND,
+          this.serviceName,
+          "getEventById",
+          {
+            resource: "Event",
+            id: id,
+          }
+        );
       }
 
       return event;
     } catch (error) {
-      throw this._handleError(error, 'getEventById', { id });
+      throw this._handleError(error, "getEventById", { id });
     }
   }
 
@@ -88,18 +95,18 @@ class EventService {
       endDate,
       type,
       status,
-      sortBy = 'created_at',
-      sortOrder = 'desc',
+      sortBy = "created_at",
+      sortOrder = "desc",
     } = options;
 
     try {
       const query = this.db(this.tableName)
         .modify((queryBuilder) => {
           if (startDate) {
-            queryBuilder.where('start_date', '>=', startDate);
+            queryBuilder.where("start_date", ">=", startDate);
           }
           if (endDate) {
-            queryBuilder.where('end_date', '<=', endDate);
+            queryBuilder.where("end_date", "<=", endDate);
           }
           if (type) {
             queryBuilder.where({ type });
@@ -113,7 +120,7 @@ class EventService {
       const offset = (page - 1) * limit;
 
       const [count, events] = await Promise.all([
-        this.db(this.tableName).count('id as total').first(),
+        this.db(this.tableName).count("id as total").first(),
         query.limit(limit).offset(offset),
       ]);
 
@@ -127,7 +134,7 @@ class EventService {
         },
       };
     } catch (error) {
-      throw this._handleError(error, 'getEvents', { options });
+      throw this._handleError(error, "getEvents", { options });
     }
   }
 
@@ -139,19 +146,27 @@ class EventService {
    */
   async updateEvent(id, updateData) {
     try {
-      const [event] = await this.db(this.tableName).where({ id }).update(updateData).returning('*');
+      const [event] = await this.db(this.tableName)
+        .where({ id })
+        .update(updateData)
+        .returning("*");
 
       if (!event) {
-        throw new AppError(ErrorTypes.NOT_FOUND, this.serviceName, 'updateEvent', {
-          resource: 'Event',
-          id: id,
-          updateAttempted: true,
-        });
+        throw new AppError(
+          ErrorTypes.NOT_FOUND,
+          this.serviceName,
+          "updateEvent",
+          {
+            resource: "Event",
+            id: id,
+            updateAttempted: true,
+          }
+        );
       }
 
       return event;
     } catch (error) {
-      throw this._handleError(error, 'updateEvent', { id, updateData });
+      throw this._handleError(error, "updateEvent", { id, updateData });
     }
   }
 
@@ -165,16 +180,21 @@ class EventService {
       const deleted = await this.db(this.tableName).where({ id }).delete();
 
       if (!deleted) {
-        throw new AppError(ErrorTypes.NOT_FOUND, this.serviceName, 'deleteEvent', {
-          resource: 'Event',
-          id: id,
-          deleteAttempted: true,
-        });
+        throw new AppError(
+          ErrorTypes.NOT_FOUND,
+          this.serviceName,
+          "deleteEvent",
+          {
+            resource: "Event",
+            id: id,
+            deleteAttempted: true,
+          }
+        );
       }
 
       return true;
     } catch (error) {
-      throw this._handleError(error, 'deleteEvent', { id });
+      throw this._handleError(error, "deleteEvent", { id });
     }
   }
 
@@ -187,10 +207,10 @@ class EventService {
   async getEventsByDateRange(startDate, endDate) {
     try {
       return await this.db(this.tableName)
-        .whereBetween('start_date', [startDate, endDate])
-        .orderBy('start_date', 'asc');
+        .whereBetween("start_date", [startDate, endDate])
+        .orderBy("start_date", "asc");
     } catch (error) {
-      throw this._handleError(error, 'getEventsByDateRange', {
+      throw this._handleError(error, "getEventsByDateRange", {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
       });
@@ -211,9 +231,9 @@ class EventService {
         .where({ type })
         .limit(limit)
         .offset(offset)
-        .orderBy('created_at', 'desc');
+        .orderBy("created_at", "desc");
     } catch (error) {
-      throw this._handleError(error, 'getEventsByType', { type, options });
+      throw this._handleError(error, "getEventsByType", { type, options });
     }
   }
 
@@ -225,11 +245,11 @@ class EventService {
   async searchEvents(query) {
     try {
       return await this.db(this.tableName)
-        .where('title', 'like', `%${query}%`)
-        .orWhere('description', 'like', `%${query}%`)
-        .orderBy('created_at', 'desc');
+        .where("title", "like", `%${query}%`)
+        .orWhere("description", "like", `%${query}%`)
+        .orderBy("created_at", "desc");
     } catch (error) {
-      throw this._handleError(error, 'searchEvents', { query });
+      throw this._handleError(error, "searchEvents", { query });
     }
   }
 
@@ -248,21 +268,31 @@ class EventService {
     }
 
     // Handle specific database errors
-    if (error.code === '23505') {
-      return new AppError(ErrorTypes.DUPLICATE_ENTRY, this.serviceName, method, {
-        error: error.detail,
-        constraint: error.constraint,
-        ...details,
-      });
+    if (error.code === "23505") {
+      return new AppError(
+        ErrorTypes.DUPLICATE_ENTRY,
+        this.serviceName,
+        method,
+        {
+          error: error.detail,
+          constraint: error.constraint,
+          ...details,
+        }
+      );
     }
 
-    if (error.code === '23503') {
-      return new AppError(ErrorTypes.VALIDATION_ERROR, this.serviceName, method, {
-        message: 'Referenced record does not exist',
-        error: error.detail,
-        constraint: error.constraint,
-        ...details,
-      });
+    if (error.code === "23503") {
+      return new AppError(
+        ErrorTypes.VALIDATION_ERROR,
+        this.serviceName,
+        method,
+        {
+          message: "Referenced record does not exist",
+          error: error.detail,
+          constraint: error.constraint,
+          ...details,
+        }
+      );
     }
 
     // Handle general database errors

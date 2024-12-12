@@ -1,4 +1,4 @@
-const { formatErrorMessage } = require('./errorTypes');
+const { formatErrorMessage } = require("./errorTypes");
 
 class AppError extends Error {
   constructor(errorType, service, method, details = null) {
@@ -11,7 +11,7 @@ class AppError extends Error {
     this.details = details;
     this.service = service;
     this.method = method;
-    this.status = `${errorType.statusCode}`.startsWith('4') ? 'fail' : 'error';
+    this.status = `${errorType.statusCode}`.startsWith("4") ? "fail" : "error";
     this.isOperational = true;
 
     Error.captureStackTrace(this, this.constructor);

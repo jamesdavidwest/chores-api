@@ -1,5 +1,5 @@
-const Joi = require('joi');
-const { config } = require('../config/auth');
+const Joi = require("joi");
+const { config } = require("../config/auth");
 
 const schemas = {
   // User schemas
@@ -11,8 +11,8 @@ const schemas = {
       .regex(/[!@#$%^&*(),.?":{}|<>]/)
       .required()
       .messages({
-        'string.pattern.base':
-          'Password must contain at least one number and one special character',
+        "string.pattern.base":
+          "Password must contain at least one number and one special character",
       }),
     instanceId: Joi.number().integer().positive(),
     roles: Joi.array().items(Joi.string()),
@@ -25,8 +25,8 @@ const schemas = {
       .regex(/\d/)
       .regex(/[!@#$%^&*(),.?":{}|<>]/)
       .messages({
-        'string.pattern.base':
-          'Password must contain at least one number and one special character',
+        "string.pattern.base":
+          "Password must contain at least one number and one special character",
       }),
     instanceId: Joi.number().integer().positive(),
     roles: Joi.array().items(Joi.string()),
@@ -47,8 +47,8 @@ const schemas = {
       .regex(/[!@#$%^&*(),.?":{}|<>]/)
       .required()
       .messages({
-        'string.pattern.base':
-          'Password must contain at least one number and one special character',
+        "string.pattern.base":
+          "Password must contain at least one number and one special character",
       }),
   }),
 
@@ -62,7 +62,7 @@ const schemas = {
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
     sortBy: Joi.string(),
-    sortOrder: Joi.string().valid('asc', 'desc'),
+    sortOrder: Joi.string().valid("asc", "desc"),
   }),
 };
 

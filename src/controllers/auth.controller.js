@@ -1,8 +1,8 @@
-const bcrypt = require('bcryptjs');
-const jwtService = require('../services/JWTService');
-const { AppError } = require('../utils/AppError');
-const authConfig = require('../config/auth');
-const UserService = require('../services/UserService');
+const bcrypt = require("bcryptjs");
+const jwtService = require("../services/JWTService");
+const { AppError } = require("../utils/AppError");
+const authConfig = require("../config/auth");
+const UserService = require("../services/UserService");
 
 class AuthController {
   constructor() {
@@ -15,24 +15,29 @@ class AuthController {
 
       // Validate input
       if (!email || !password) {
-        throw new AppError(400, 'MISSING_CREDENTIALS', 'Email and password are required', {
-          type: 'validation',
-        });
+        throw new AppError(
+          400,
+          "MISSING_CREDENTIALS",
+          "Email and password are required",
+          {
+            type: "validation",
+          }
+        );
       }
 
       // Get user by email
       const user = await this.userService.findByEmail(email);
       if (!user) {
-        throw new AppError(401, 'INVALID_CREDENTIALS', 'Invalid credentials', {
-          type: 'authentication',
+        throw new AppError(401, "INVALID_CREDENTIALS", "Invalid credentials", {
+          type: "authentication",
         });
       }
 
       // Verify password
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
-        throw new AppError(401, 'INVALID_CREDENTIALS', 'Invalid credentials', {
-          type: 'authentication',
+        throw new AppError(401, "INVALID_CREDENTIALS", "Invalid credentials", {
+          type: "authentication",
         });
       }
 
@@ -43,7 +48,8 @@ class AuthController {
         roles: user.roles,
       };
 
-      const { accessToken, refreshToken } = jwtService.generateTokenPair(tokenPayload);
+      const { accessToken, refreshToken } =
+        jwtService.generateTokenPair(tokenPayload);
 
       // Set refresh token as HTTP-only cookie
       res.cookie(authConfig.session.cookieName, refreshToken, {
@@ -72,9 +78,14 @@ class AuthController {
     try {
       const refreshToken = req.cookies[authConfig.session.cookieName];
       if (!refreshToken) {
-        throw new AppError(401, 'REFRESH_TOKEN_MISSING', 'Refresh token not found', {
-          type: 'authentication',
-        });
+        throw new AppError(
+          401,
+          "REFRESH_TOKEN_MISSING",
+          "Refresh token not found",
+          {
+            type: "authentication",
+          }
+        );
       }
 
       const { accessToken, refreshToken: newRefreshToken } =
@@ -99,7 +110,7 @@ class AuthController {
       // Clear refresh token cookie
       res.clearCookie(authConfig.session.cookieName);
 
-      res.success({ message: 'Successfully logged out' });
+      res.success({ message: "Successfully logged out" });
     } catch (error) {
       next(error);
     }
@@ -112,22 +123,32 @@ class AuthController {
 
       const user = await this.userService.findById(userId);
       if (!user) {
-        throw new AppError(404, 'USER_NOT_FOUND', 'User not found', { type: 'notFound' });
+        throw new AppError(404, "USER_NOT_FOUND", "User not found", {
+          type: "notFound",
+        });
       }
 
       // Verify current password
-      const isValidPassword = await bcrypt.compare(currentPassword, user.password);
+      const isValidPassword = await bcrypt.compare(
+        currentPassword,
+        user.password
+      );
       if (!isValidPassword) {
-        throw new AppError(401, 'INVALID_PASSWORD', 'Current password is incorrect', {
-          type: 'authentication',
-        });
+        throw new AppError(
+          401,
+          "INVALID_PASSWORD",
+          "Current password is incorrect",
+          {
+            type: "authentication",
+          }
+        );
       }
 
       // Hash new password and update
       const hashedPassword = await bcrypt.hash(newPassword, 12);
       await this.userService.updatePassword(userId, hashedPassword);
 
-      res.success({ message: 'Password successfully updated' });
+      res.success({ message: "Password successfully updated" });
     } catch (error) {
       next(error);
     }

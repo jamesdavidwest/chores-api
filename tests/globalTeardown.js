@@ -3,6 +3,6 @@ module.exports = async () => {
   if (global.__DB__) {
     await global.__DB__.destroy();
   }
-  
+
   // Any other cleanup needed
 };

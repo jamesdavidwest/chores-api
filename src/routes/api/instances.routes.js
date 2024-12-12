@@ -1,10 +1,12 @@
 // src/routes/api/instances.routes.js
 
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { validateSchema } = require('../../middleware/validation/schemaValidator');
-const instanceSchemas = require('../../schemas/instance.schema');
-const InstanceController = require('../../controllers/instance.controller');
+const {
+  validateSchema,
+} = require("../../middleware/validation/schemaValidator");
+const instanceSchemas = require("../../schemas/instance.schema");
+const InstanceController = require("../../controllers/instance.controller");
 
 // Initialize controller
 const instanceController = new InstanceController();
@@ -77,7 +79,7 @@ const instanceController = new InstanceController();
  *           format: date-time
  *           nullable: true
  *           description: When the instance was archived, if applicable
- *     
+ *
  *     InstanceResponse:
  *       type: object
  *       properties:
@@ -85,7 +87,7 @@ const instanceController = new InstanceController();
  *           type: boolean
  *         data:
  *           $ref: '#/components/schemas/Instance'
- *     
+ *
  *     InstanceListResponse:
  *       type: object
  *       properties:
@@ -163,10 +165,14 @@ const instanceController = new InstanceController();
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */
-router.get('/', async (req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
     const { page = 1, limit = 10, ...filters } = req.query;
-    const instances = await instanceController.list(parseInt(page), parseInt(limit), filters);
+    const instances = await instanceController.list(
+      parseInt(page),
+      parseInt(limit),
+      filters
+    );
     res.json({
       success: true,
       data: instances.data,
@@ -205,7 +211,7 @@ router.get('/', async (req, res, next) => {
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.get('/:id', async (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
   try {
     const instance = await instanceController.getById(req.params.id);
     res.json({
@@ -280,20 +286,24 @@ router.get('/:id', async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', validateSchema(instanceSchemas.createInstance), async (req, res, next) => {
-  try {
-    const instance = await instanceController.create({
-      ...req.body,
-      createdBy: req.user.id,
-    });
-    res.status(201).json({
-      success: true,
-      data: instance,
-    });
-  } catch (error) {
-    next(error);
+router.post(
+  "/",
+  validateSchema(instanceSchemas.createInstance),
+  async (req, res, next) => {
+    try {
+      const instance = await instanceController.create({
+        ...req.body,
+        createdBy: req.user.id,
+      });
+      res.status(201).json({
+        success: true,
+        data: instance,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 /**
  * @swagger
@@ -361,17 +371,25 @@ router.post('/', validateSchema(instanceSchemas.createInstance), async (req, res
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.put('/:id', validateSchema(instanceSchemas.updateInstance), async (req, res, next) => {
-  try {
-    const instance = await instanceController.update(req.params.id, req.body, req.user.id);
-    res.json({
-      success: true,
-      data: instance,
-    });
-  } catch (error) {
-    next(error);
+router.put(
+  "/:id",
+  validateSchema(instanceSchemas.updateInstance),
+  async (req, res, next) => {
+    try {
+      const instance = await instanceController.update(
+        req.params.id,
+        req.body,
+        req.user.id
+      );
+      res.json({
+        success: true,
+        data: instance,
+      });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 /**
  * @swagger
@@ -407,7 +425,7 @@ router.put('/:id', validateSchema(instanceSchemas.updateInstance), async (req, r
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.delete('/:id', async (req, res, next) => {
+router.delete("/:id", async (req, res, next) => {
   try {
     await instanceController.delete(req.params.id, req.user.id);
     res.json({
@@ -447,9 +465,12 @@ router.delete('/:id', async (req, res, next) => {
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.post('/:id/archive', async (req, res, next) => {
+router.post("/:id/archive", async (req, res, next) => {
   try {
-    const instance = await instanceController.archive(req.params.id, req.user.id);
+    const instance = await instanceController.archive(
+      req.params.id,
+      req.user.id
+    );
     res.json({
       success: true,
       data: instance,
@@ -493,9 +514,12 @@ router.post('/:id/archive', async (req, res, next) => {
  *       404:
  *         $ref: '#/components/responses/NotFoundError'
  */
-router.post('/:id/restore', async (req, res, next) => {
+router.post("/:id/restore", async (req, res, next) => {
   try {
-    const instance = await instanceController.restore(req.params.id, req.user.id);
+    const instance = await instanceController.restore(
+      req.params.id,
+      req.user.id
+    );
     res.json({
       success: true,
       data: instance,

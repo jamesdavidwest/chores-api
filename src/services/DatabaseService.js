@@ -1,7 +1,7 @@
 // src/services/DatabaseService.js
-const knex = require('knex');
-const dbConfig = require('../config/database');
-const LoggerService = require('./LoggerService');
+const knex = require("knex");
+const dbConfig = require("../config/database");
+const LoggerService = require("./LoggerService");
 
 class DatabaseService {
   constructor() {
@@ -16,7 +16,7 @@ class DatabaseService {
    * @param {string} environment - The environment to use (development, production, testing)
    * @returns {Promise<void>}
    */
-  async initialize(environment = process.env.NODE_ENV || 'development') {
+  async initialize(environment = process.env.NODE_ENV || "development") {
     try {
       this.config = dbConfig[environment];
 
@@ -27,15 +27,15 @@ class DatabaseService {
       this.knex = knex(this.config);
 
       // Test the connection
-      await this.knex.raw('SELECT 1');
+      await this.knex.raw("SELECT 1");
       this._connected = true;
 
-      this.logger.info('Database connection established', {
+      this.logger.info("Database connection established", {
         environment,
         client: this.config.client,
       });
     } catch (error) {
-      this.logger.error('Database connection failed', {
+      this.logger.error("Database connection failed", {
         error: error.message,
         environment,
         client: this.config?.client,
@@ -51,7 +51,7 @@ class DatabaseService {
    */
   getKnex() {
     if (!this._connected) {
-      throw new Error('Database not initialized. Call initialize() first.');
+      throw new Error("Database not initialized. Call initialize() first.");
     }
     return this.knex;
   }
@@ -72,7 +72,7 @@ class DatabaseService {
     if (this._connected && this.knex) {
       await this.knex.destroy();
       this._connected = false;
-      this.logger.info('Database connection closed');
+      this.logger.info("Database connection closed");
     }
   }
 
@@ -89,7 +89,7 @@ class DatabaseService {
    * @returns {string} The current environment
    */
   getEnvironment() {
-    return this.config?.client === 'sqlite3' ? 'development' : 'production';
+    return this.config?.client === "sqlite3" ? "development" : "production";
   }
 }
 

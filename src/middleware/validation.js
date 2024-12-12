@@ -1,6 +1,6 @@
-const { AppError } = require('../utils/AppError');
+const { AppError } = require("../utils/AppError");
 
-const validate = (schema, property = 'body') => {
+const validate = (schema, property = "body") => {
   return (req, res, next) => {
     try {
       const { error, value } = schema.validate(req[property], {
@@ -10,11 +10,11 @@ const validate = (schema, property = 'body') => {
 
       if (error) {
         const details = error.details.map((detail) => ({
-          field: detail.path.join('.'),
+          field: detail.path.join("."),
           message: detail.message,
         }));
 
-        throw new AppError(400, 'VAL001', 'Validation error', details);
+        throw new AppError(400, "VAL001", "Validation error", details);
       }
 
       // Replace request data with validated data
@@ -60,11 +60,11 @@ const validateRequest = (schemas) => {
       next();
     } catch (error) {
       const details = error.details.map((detail) => ({
-        field: detail.path.join('.'),
+        field: detail.path.join("."),
         message: detail.message,
       }));
 
-      next(new AppError(400, 'VAL001', 'Validation error', details));
+      next(new AppError(400, "VAL001", "Validation error", details));
     }
   };
 };

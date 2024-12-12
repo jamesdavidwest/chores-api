@@ -1,6 +1,6 @@
-const AppError = require('../utils/AppError');
-const ErrorTypes = require('../utils/errorTypes');
-const logger = require('../services/LoggerService');
+const AppError = require("../utils/AppError");
+const ErrorTypes = require("../utils/errorTypes");
+const logger = require("../services/LoggerService");
 
 // Development error response
 const sendErrorDev = (err, res) => {
@@ -10,11 +10,11 @@ const sendErrorDev = (err, res) => {
       code: err.code,
       message: err.message,
       details: err.details,
-      stack: err.stack
+      stack: err.stack,
     },
     metadata: {
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   });
 };
 
@@ -27,34 +27,34 @@ const sendErrorProd = (err, res) => {
       error: {
         code: err.code,
         message: err.message,
-        details: err.details
+        details: err.details,
       },
       metadata: {
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
-  } 
+  }
   // Programming or other unknown error: don't leak error details
   else {
     // Log error for internal tracking
-    logger.error('Unhandled error', { error: err });
-    
+    logger.error("Unhandled error", { error: err });
+
     res.status(500).json({
       success: false,
       error: {
         code: ErrorTypes.INTERNAL_ERROR.code,
-        message: ErrorTypes.INTERNAL_ERROR.message
+        message: ErrorTypes.INTERNAL_ERROR.message,
       },
       metadata: {
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   }
 };
 
 // Handle Knex database errors
-const handleKnexError = err => {
-  if (err.code === '23505') {
+const handleKnexError = (err) => {
+  if (err.code === "23505") {
     return new AppError(
       ErrorTypes.DUPLICATE_ENTRY.statusCode,
       ErrorTypes.DUPLICATE_ENTRY.code,
@@ -62,12 +62,12 @@ const handleKnexError = err => {
       err.detail
     );
   }
-  
-  if (err.code === '23503') {
+
+  if (err.code === "23503") {
     return new AppError(
       ErrorTypes.VALIDATION_ERROR.statusCode,
       ErrorTypes.VALIDATION_ERROR.code,
-      'Referenced record does not exist',
+      "Referenced record does not exist",
       err.detail
     );
   }
@@ -98,24 +98,24 @@ const handleJWTExpiredError = () =>
 // Main error handling middleware
 const errorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
+  err.status = err.status || "error";
 
   // Handle specific error types
   let error = { ...err };
   error.message = err.message;
   error.name = err.name;
 
-  if (error.code && error.code.startsWith('22')) {
+  if (error.code && error.code.startsWith("22")) {
     error = handleKnexError(error);
   }
-  if (error.name === 'JsonWebTokenError') error = handleJWTError();
-  if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
+  if (error.name === "JsonWebTokenError") error = handleJWTError();
+  if (error.name === "TokenExpiredError") error = handleJWTExpiredError();
 
   // Log the error
   logger.logError(error, req);
 
   // Send appropriate error response based on environment
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === "development") {
     sendErrorDev(error, res);
   } else {
     sendErrorProd(error, res);

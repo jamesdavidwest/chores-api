@@ -1,7 +1,7 @@
 // src/utils/responseFormatter.js
 
-const { v4: uuidv4 } = require('uuid');
-const { format } = require('date-fns');
+const { v4: uuidv4 } = require("uuid");
+const { format } = require("date-fns");
 
 class ResponseFormatter {
   static success(data = null, metadata = {}) {
@@ -18,11 +18,11 @@ class ResponseFormatter {
 
   static error(error = {}, metadata = {}) {
     const baseError = {
-      code: error.code || 'INTERNAL_ERROR',
-      message: error.message || 'An unexpected error occurred',
+      code: error.code || "INTERNAL_ERROR",
+      message: error.message || "An unexpected error occurred",
     };
 
-    if (process.env.NODE_ENV !== 'production' && error.details) {
+    if (process.env.NODE_ENV !== "production" && error.details) {
       baseError.details = error.details;
     }
 
