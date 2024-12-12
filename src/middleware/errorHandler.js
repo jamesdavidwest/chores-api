@@ -1,5 +1,6 @@
 const AppError = require('../utils/AppError');
 const ErrorTypes = require('../utils/errorTypes');
+const logger = require('../services/LoggerService');
 
 // Development error response
 const sendErrorDev = (err, res) => {
@@ -36,7 +37,7 @@ const sendErrorProd = (err, res) => {
   // Programming or other unknown error: don't leak error details
   else {
     // Log error for internal tracking
-    console.error('ERROR 💥', err);
+    logger.error('Unhandled error', { error: err });
     
     res.status(500).json({
       success: false,
@@ -109,6 +110,9 @@ const errorHandler = (err, req, res, next) => {
   }
   if (error.name === 'JsonWebTokenError') error = handleJWTError();
   if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
+
+  // Log the error
+  logger.logError(error, req);
 
   // Send appropriate error response based on environment
   if (process.env.NODE_ENV === 'development') {

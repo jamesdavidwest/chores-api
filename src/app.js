@@ -4,6 +4,9 @@ const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
 const { config } = require("./config/auth");
 const { apiLimiter, authLimiter } = require("./middleware/rateLimiter");
+const requestLogger = require("./middleware/requestLogger");
+const errorHandler = require("./middleware/errorHandler");
+const logger = require("./services/LoggerService");
 
 // Import routes
 const authRoutes = require("./routes/auth.routes");
@@ -11,13 +14,16 @@ const authRoutes = require("./routes/auth.routes");
 // Create Express app
 const app = express();
 
+// Logging middleware - should be first to capture all requests
+app.use(requestLogger);
+
 // Security middleware
 app.use(helmet());
 app.use(
-	cors({
-		origin: process.env.CORS_ORIGIN || "http://localhost:3000",
-		credentials: true,
-	})
+  cors({
+    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    credentials: true,
+  })
 );
 
 // Request parsing middleware
@@ -34,39 +40,39 @@ app.use("/api/v1/auth", authRoutes);
 
 // Basic health check endpoint
 app.get("/health", (req, res) => {
-	res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Global error handler
-app.use((err, req, res, next) => {
-	console.error(err);
-
-	const statusCode = err.statusCode || 500;
-	const errorCode = err.code || "SERVER_ERROR";
-	const message = err.message || "Internal Server Error";
-
-	// Only include error details in development
-	const details = process.env.NODE_ENV === "development" ? err.details : undefined;
-
-	res.status(statusCode).json({
-		success: false,
-		error: {
-			code: errorCode,
-			message: message,
-			details: details,
-		},
-	});
+// Log uncaught API routes before 404
+app.use((req, res, next) => {
+  logger.warn("Route not found", {
+    method: req.method,
+    path: req.originalUrl,
+    ip: req.ip,
+  });
+  next();
 });
 
 // 404 handler
 app.use((req, res) => {
-	res.status(404).json({
-		success: false,
-		error: {
-			code: "NOT_FOUND",
-			message: "Resource not found",
-		},
-	});
+  res.status(404).json({
+    success: false,
+    error: {
+      code: "NOT_FOUND",
+      message: "Resource not found",
+    },
+  });
+});
+
+// Global error handler - must be last
+app.use(errorHandler);
+
+// Log application startup
+app.on("ready", () => {
+  logger.info("Application started", {
+    env: process.env.NODE_ENV,
+    port: process.env.PORT,
+  });
 });
 
 module.exports = app;
