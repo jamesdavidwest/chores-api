@@ -8,6 +8,7 @@ const { apiLimiter, authLimiter } = require('./middleware/rateLimiter');
 const requestLogger = require('./middleware/requestLogger');
 const responseHandler = require('./middleware/responseHandler');
 const errorHandler = require('./middleware/errorHandler');
+const setupSwagger = require('./middleware/swagger');
 const logger = require('./services/LoggerService');
 
 // Import routes
@@ -20,7 +21,18 @@ const app = express();
 app.use(requestLogger);
 
 // Security middleware
-app.use(helmet());
+app.use(
+  helmet({
+    // Modify CSP for Swagger UI
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        'img-src': ["'self'", 'data:', 'https:'],
+      },
+    },
+  })
+);
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
@@ -35,6 +47,11 @@ app.use(cookieParser());
 
 // Response handler - after parsing, before routes
 app.use(responseHandler);
+
+// Setup Swagger documentation
+if (process.env.NODE_ENV !== 'production' || process.env.SWAGGER_ENABLED === 'true') {
+  setupSwagger(app);
+}
 
 // Apply rate limiting
 app.use('/api/', apiLimiter); // General API rate limiting
