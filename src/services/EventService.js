@@ -11,15 +11,13 @@ class EventService {
 
   /**
    * Create a new event
-   * @param {Object} eventData 
+   * @param {Object} eventData
    * @returns {Promise<Object>} Created event
    */
   async createEvent(eventData) {
     try {
-      const [event] = await this.db(this.tableName)
-        .insert(eventData)
-        .returning('*');
-      
+      const [event] = await this.db(this.tableName).insert(eventData).returning('*');
+
       return event;
     } catch (error) {
       throw this._handleError(error, 'createEvent', { eventData });
@@ -28,15 +26,15 @@ class EventService {
 
   /**
    * Create multiple events in a transaction
-   * @param {Array<Object>} events 
+   * @param {Array<Object>} events
    * @returns {Promise<Array<Object>>} Created events
    */
   async createManyEvents(events) {
     const trx = await this.db.transaction();
-    
+
     try {
       const createdEvents = await Promise.all(
-        events.map(event => 
+        events.map((event) =>
           trx(this.tableName)
             .insert(event)
             .returning('*')
@@ -48,34 +46,27 @@ class EventService {
       return createdEvents;
     } catch (error) {
       await trx.rollback();
-      throw this._handleError(error, 'createManyEvents', { 
+      throw this._handleError(error, 'createManyEvents', {
         eventCount: events.length,
-        failedEvent: error.event
+        failedEvent: error.event,
       });
     }
   }
 
   /**
    * Get event by ID
-   * @param {string|number} id 
+   * @param {string|number} id
    * @returns {Promise<Object>} Event object
    */
   async getEventById(id) {
     try {
-      const event = await this.db(this.tableName)
-        .where({ id })
-        .first();
+      const event = await this.db(this.tableName).where({ id }).first();
 
       if (!event) {
-        throw new AppError(
-          ErrorTypes.NOT_FOUND,
-          this.serviceName,
-          'getEventById',
-          {
-            resource: 'Event',
-            id: id
-          }
-        );
+        throw new AppError(ErrorTypes.NOT_FOUND, this.serviceName, 'getEventById', {
+          resource: 'Event',
+          id: id,
+        });
       }
 
       return event;
@@ -98,12 +89,12 @@ class EventService {
       type,
       status,
       sortBy = 'created_at',
-      sortOrder = 'desc'
+      sortOrder = 'desc',
     } = options;
 
     try {
       const query = this.db(this.tableName)
-        .modify(queryBuilder => {
+        .modify((queryBuilder) => {
           if (startDate) {
             queryBuilder.where('start_date', '>=', startDate);
           }
@@ -120,10 +111,10 @@ class EventService {
         .orderBy(sortBy, sortOrder);
 
       const offset = (page - 1) * limit;
-      
+
       const [count, events] = await Promise.all([
         this.db(this.tableName).count('id as total').first(),
-        query.limit(limit).offset(offset)
+        query.limit(limit).offset(offset),
       ]);
 
       return {
@@ -132,8 +123,8 @@ class EventService {
           page,
           limit,
           total: parseInt(count.total),
-          totalPages: Math.ceil(count.total / limit)
-        }
+          totalPages: Math.ceil(count.total / limit),
+        },
       };
     } catch (error) {
       throw this._handleError(error, 'getEvents', { options });
@@ -142,28 +133,20 @@ class EventService {
 
   /**
    * Update an event
-   * @param {string|number} id 
-   * @param {Object} updateData 
+   * @param {string|number} id
+   * @param {Object} updateData
    * @returns {Promise<Object>} Updated event
    */
   async updateEvent(id, updateData) {
     try {
-      const [event] = await this.db(this.tableName)
-        .where({ id })
-        .update(updateData)
-        .returning('*');
+      const [event] = await this.db(this.tableName).where({ id }).update(updateData).returning('*');
 
       if (!event) {
-        throw new AppError(
-          ErrorTypes.NOT_FOUND,
-          this.serviceName,
-          'updateEvent',
-          {
-            resource: 'Event',
-            id: id,
-            updateAttempted: true
-          }
-        );
+        throw new AppError(ErrorTypes.NOT_FOUND, this.serviceName, 'updateEvent', {
+          resource: 'Event',
+          id: id,
+          updateAttempted: true,
+        });
       }
 
       return event;
@@ -174,26 +157,19 @@ class EventService {
 
   /**
    * Delete an event
-   * @param {string|number} id 
+   * @param {string|number} id
    * @returns {Promise<boolean>} Success status
    */
   async deleteEvent(id) {
     try {
-      const deleted = await this.db(this.tableName)
-        .where({ id })
-        .delete();
+      const deleted = await this.db(this.tableName).where({ id }).delete();
 
       if (!deleted) {
-        throw new AppError(
-          ErrorTypes.NOT_FOUND,
-          this.serviceName,
-          'deleteEvent',
-          {
-            resource: 'Event',
-            id: id,
-            deleteAttempted: true
-          }
-        );
+        throw new AppError(ErrorTypes.NOT_FOUND, this.serviceName, 'deleteEvent', {
+          resource: 'Event',
+          id: id,
+          deleteAttempted: true,
+        });
       }
 
       return true;
@@ -204,8 +180,8 @@ class EventService {
 
   /**
    * Get events by date range
-   * @param {Date} startDate 
-   * @param {Date} endDate 
+   * @param {Date} startDate
+   * @param {Date} endDate
    * @returns {Promise<Array<Object>>} Events in range
    */
   async getEventsByDateRange(startDate, endDate) {
@@ -214,16 +190,16 @@ class EventService {
         .whereBetween('start_date', [startDate, endDate])
         .orderBy('start_date', 'asc');
     } catch (error) {
-      throw this._handleError(error, 'getEventsByDateRange', { 
-        startDate: startDate.toISOString(), 
-        endDate: endDate.toISOString() 
+      throw this._handleError(error, 'getEventsByDateRange', {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
       });
     }
   }
 
   /**
    * Get events by type
-   * @param {string} type 
+   * @param {string} type
    * @param {Object} options Query options
    * @returns {Promise<Array<Object>>} Events of type
    */
@@ -260,8 +236,8 @@ class EventService {
   /**
    * Handle database errors with specific context
    * @private
-   * @param {Error} error 
-   * @param {string} method 
+   * @param {Error} error
+   * @param {string} method
    * @param {Object} details
    * @returns {AppError}
    */
@@ -273,43 +249,28 @@ class EventService {
 
     // Handle specific database errors
     if (error.code === '23505') {
-      return new AppError(
-        ErrorTypes.DUPLICATE_ENTRY,
-        this.serviceName,
-        method,
-        {
-          error: error.detail,
-          constraint: error.constraint,
-          ...details
-        }
-      );
+      return new AppError(ErrorTypes.DUPLICATE_ENTRY, this.serviceName, method, {
+        error: error.detail,
+        constraint: error.constraint,
+        ...details,
+      });
     }
 
     if (error.code === '23503') {
-      return new AppError(
-        ErrorTypes.VALIDATION_ERROR,
-        this.serviceName,
-        method,
-        {
-          message: 'Referenced record does not exist',
-          error: error.detail,
-          constraint: error.constraint,
-          ...details
-        }
-      );
+      return new AppError(ErrorTypes.VALIDATION_ERROR, this.serviceName, method, {
+        message: 'Referenced record does not exist',
+        error: error.detail,
+        constraint: error.constraint,
+        ...details,
+      });
     }
 
     // Handle general database errors
-    return new AppError(
-      ErrorTypes.DB_ERROR,
-      this.serviceName,
-      method,
-      {
-        message: error.message,
-        code: error.code,
-        ...details
-      }
-    );
+    return new AppError(ErrorTypes.DB_ERROR, this.serviceName, method, {
+      message: error.message,
+      code: error.code,
+      ...details,
+    });
   }
 }
 

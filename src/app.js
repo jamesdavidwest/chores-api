@@ -1,18 +1,17 @@
 // src/app.js
 
-const express = require("express");
-const cors = require("cors");
-const cookieParser = require("cookie-parser");
-const helmet = require("helmet");
-const { config } = require("./config/auth");
-const { apiLimiter, authLimiter } = require("./middleware/rateLimiter");
-const requestLogger = require("./middleware/requestLogger");
-const responseHandler = require("./middleware/responseHandler");
-const errorHandler = require("./middleware/errorHandler");
-const logger = require("./services/LoggerService");
+const express = require('express');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const helmet = require('helmet');
+const { apiLimiter, authLimiter } = require('./middleware/rateLimiter');
+const requestLogger = require('./middleware/requestLogger');
+const responseHandler = require('./middleware/responseHandler');
+const errorHandler = require('./middleware/errorHandler');
+const logger = require('./services/LoggerService');
 
 // Import routes
-const authRoutes = require("./routes/auth.routes");
+const authRoutes = require('./routes/auth.routes');
 
 // Create Express app
 const app = express();
@@ -24,7 +23,7 @@ app.use(requestLogger);
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
     credentials: true,
   })
 );
@@ -38,20 +37,20 @@ app.use(cookieParser());
 app.use(responseHandler);
 
 // Apply rate limiting
-app.use("/api/", apiLimiter); // General API rate limiting
-app.use("/api/v1/auth", authLimiter); // Stricter limiting for auth routes
+app.use('/api/', apiLimiter); // General API rate limiting
+app.use('/api/v1/auth', authLimiter); // Stricter limiting for auth routes
 
 // API versioning and routes
-app.use("/api/v1/auth", authRoutes);
+app.use('/api/v1/auth', authRoutes);
 
 // Basic health check endpoint
-app.get("/health", (req, res) => {
-  res.success({ status: "ok", timestamp: new Date().toISOString() });
+app.get('/health', (req, res) => {
+  res.success({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Log uncaught API routes before 404
 app.use((req, res, next) => {
-  logger.warn("Route not found", {
+  logger.warn('Route not found', {
     method: req.method,
     path: req.originalUrl,
     ip: req.ip,
@@ -62,8 +61,8 @@ app.use((req, res, next) => {
 // 404 handler
 app.use((req, res) => {
   res.status(404).error({
-    code: "NOT_FOUND",
-    message: "Resource not found",
+    code: 'NOT_FOUND',
+    message: 'Resource not found',
   });
 });
 
@@ -71,8 +70,8 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // Log application startup
-app.on("ready", () => {
-  logger.info("Application started", {
+app.on('ready', () => {
+  logger.info('Application started', {
     env: process.env.NODE_ENV,
     port: process.env.PORT,
   });

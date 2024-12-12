@@ -9,7 +9,7 @@ class ResponseFormatter {
       success: true,
       data,
       metadata: {
-        timestamp: format(new Date(), 'yyyy-MM-dd\'T\'HH:mm:ss.SSSxxx'),
+        timestamp: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
         requestId: metadata.requestId || uuidv4(),
         ...metadata,
       },
@@ -30,7 +30,7 @@ class ResponseFormatter {
       success: false,
       error: baseError,
       metadata: {
-        timestamp: format(new Date(), 'yyyy-MM-dd\'T\'HH:mm:ss.SSSxxx'),
+        timestamp: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"),
         requestId: metadata.requestId || uuidv4(),
         ...metadata,
       },
@@ -39,7 +39,7 @@ class ResponseFormatter {
 
   static withPagination(data, { page, limit, total }) {
     const hasMore = total > page * limit;
-    
+
     return this.success(data, {
       pagination: {
         page: parseInt(page, 10),

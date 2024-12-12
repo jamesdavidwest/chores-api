@@ -25,7 +25,7 @@ class AppError extends Error {
       details: this.details,
       timestamp: new Date().toISOString(),
       code: this.code,
-      statusCode: this.statusCode
+      statusCode: this.statusCode,
     };
   }
 }

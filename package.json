@@ -16,10 +16,10 @@
     "migrate:test": "NODE_ENV=test node src/db/migrate.js",
     "init-db": "node scripts/init-db.js",
     "init-db:test": "NODE_ENV=test node scripts/init-db.js",
-    "lint": "eslint . --ext .js,.ts",
-    "lint:fix": "eslint . --ext .js,.ts --fix",
-    "format": "prettier --write \"src/**/*.{js,ts}\" \"tests/**/*.{js,ts}\"",
-    "format:check": "prettier --check \"src/**/*.{js,ts}\" \"tests/**/*.{js,ts}\""
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\"",
+    "format:check": "prettier --check \"src/**/*.js\" \"tests/**/*.js\""
   },
   "keywords": [
     "backend",
@@ -47,6 +47,7 @@
     "jsonwebtoken": "^9.0.2",
     "knex": "^3.1.0",
     "morgan": "^1.10.0",
+    "nodemailer": "^6.9.9",
     "pg": "^8.13.1",
     "sqlite3": "^5.1.7",
     "uuid": "^11.0.3",
@@ -55,8 +56,6 @@
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
-    "@typescript-eslint/eslint-plugin": "^5.62.0",
-    "@typescript-eslint/parser": "^5.62.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-jest": "^27.9.0",

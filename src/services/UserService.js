@@ -4,143 +4,141 @@ const { config } = require('../config/auth');
 const DatabaseService = require('./DatabaseService');
 
 class UserService {
-    constructor() {
-        this.db = DatabaseService;
-        this.tableName = 'users';
+  constructor() {
+    this.db = DatabaseService;
+    this.tableName = 'users';
+  }
+
+  async hashPassword(password) {
+    return bcrypt.hash(password, config.password.saltRounds);
+  }
+
+  validatePassword(password) {
+    if (password.length < config.password.minLength) {
+      throw new AppError(
+        400,
+        'VAL001',
+        `Password must be at least ${config.password.minLength} characters long`
+      );
     }
 
-    async hashPassword(password) {
-        return bcrypt.hash(password, config.password.saltRounds);
+    if (config.password.requireNumbers && !/\d/.test(password)) {
+      throw new AppError(400, 'VAL002', 'Password must contain at least one number');
     }
 
-    validatePassword(password) {
-        if (password.length < config.password.minLength) {
-            throw new AppError(400, 'VAL001', `Password must be at least ${config.password.minLength} characters long`);
-        }
+    if (config.password.requireSpecialChars && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      throw new AppError(400, 'VAL003', 'Password must contain at least one special character');
+    }
+  }
 
-        if (config.password.requireNumbers && !/\d/.test(password)) {
-            throw new AppError(400, 'VAL002', 'Password must contain at least one number');
-        }
+  async create(userData) {
+    const { email, password, instanceId, roles = ['user'] } = userData;
 
-        if (config.password.requireSpecialChars && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-            throw new AppError(400, 'VAL003', 'Password must contain at least one special character');
-        }
+    // Validate email and password
+    if (!email) throw new AppError(400, 'VAL004', 'Email is required');
+    this.validatePassword(password);
+
+    // Check if user already exists
+    const existingUser = await this.findByEmail(email);
+    if (existingUser) {
+      throw new AppError(409, 'USER001', 'User already exists');
     }
 
-    async create(userData) {
-        const { email, password, instanceId, roles = ['user'] } = userData;
+    // Hash password
+    const hashedPassword = await this.hashPassword(password);
 
-        // Validate email and password
-        if (!email) throw new AppError(400, 'VAL004', 'Email is required');
-        this.validatePassword(password);
+    // Create user
+    const user = await this.db.transaction(async (trx) => {
+      const [userId] = await trx(this.tableName)
+        .insert({
+          email,
+          password: hashedPassword,
+          instance_id: instanceId,
+          roles: JSON.stringify(roles),
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .returning('id');
 
-        // Check if user already exists
-        const existingUser = await this.findByEmail(email);
-        if (existingUser) {
-            throw new AppError(409, 'USER001', 'User already exists');
-        }
+      return this.findById(userId, trx);
+    });
 
-        // Hash password
-        const hashedPassword = await this.hashPassword(password);
+    // Remove password from returned user object
+    delete user.password;
+    return user;
+  }
 
-        // Create user
-        const user = await this.db.transaction(async (trx) => {
-            const [userId] = await trx(this.tableName).insert({
-                email,
-                password: hashedPassword,
-                instance_id: instanceId,
-                roles: JSON.stringify(roles),
-                created_at: new Date(),
-                updated_at: new Date()
-            }).returning('id');
+  async findById(id, trx = this.db) {
+    const user = await trx(this.tableName).where({ id }).first();
 
-            return this.findById(userId, trx);
-        });
-
-        // Remove password from returned user object
-        delete user.password;
-        return user;
+    if (!user) {
+      throw new AppError(404, 'USER002', 'User not found');
     }
 
-    async findById(id, trx = this.db) {
-        const user = await trx(this.tableName)
-            .where({ id })
-            .first();
+    // Parse roles from JSON string
+    user.roles = JSON.parse(user.roles || '[]');
+    return user;
+  }
 
-        if (!user) {
-            throw new AppError(404, 'USER002', 'User not found');
-        }
+  async findByEmail(email, trx = this.db) {
+    const user = await trx(this.tableName).where({ email }).first();
 
-        // Parse roles from JSON string
-        user.roles = JSON.parse(user.roles || '[]');
-        return user;
+    if (user) {
+      user.roles = JSON.parse(user.roles || '[]');
     }
 
-    async findByEmail(email, trx = this.db) {
-        const user = await trx(this.tableName)
-            .where({ email })
-            .first();
+    return user;
+  }
 
-        if (user) {
-            user.roles = JSON.parse(user.roles || '[]');
-        }
+  async update(id, updateData) {
+    const { password, ...otherUpdates } = updateData;
+    const updates = { ...otherUpdates };
 
-        return user;
+    if (password) {
+      this.validatePassword(password);
+      updates.password = await this.hashPassword(password);
     }
 
-    async update(id, updateData) {
-        const { password, ...otherUpdates } = updateData;
-        const updates = { ...otherUpdates };
+    updates.updated_at = new Date();
 
-        if (password) {
-            this.validatePassword(password);
-            updates.password = await this.hashPassword(password);
-        }
+    const user = await this.db.transaction(async (trx) => {
+      await trx(this.tableName).where({ id }).update(updates);
 
-        updates.updated_at = new Date();
+      return this.findById(id, trx);
+    });
 
-        const user = await this.db.transaction(async (trx) => {
-            await trx(this.tableName)
-                .where({ id })
-                .update(updates);
+    delete user.password;
+    return user;
+  }
 
-            return this.findById(id, trx);
-        });
+  async delete(id) {
+    const deleted = await this.db(this.tableName).where({ id }).delete();
 
-        delete user.password;
-        return user;
+    if (!deleted) {
+      throw new AppError(404, 'USER003', 'User not found');
     }
 
-    async delete(id) {
-        const deleted = await this.db(this.tableName)
-            .where({ id })
-            .delete();
+    return { success: true };
+  }
 
-        if (!deleted) {
-            throw new AppError(404, 'USER003', 'User not found');
-        }
+  async changePassword(id, currentPassword, newPassword) {
+    const user = await this.findById(id);
 
-        return { success: true };
+    // Verify current password
+    const isValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isValid) {
+      throw new AppError(401, 'USER004', 'Current password is incorrect');
     }
 
-    async changePassword(id, currentPassword, newPassword) {
-        const user = await this.findById(id);
-        
-        // Verify current password
-        const isValid = await bcrypt.compare(currentPassword, user.password);
-        if (!isValid) {
-            throw new AppError(401, 'USER004', 'Current password is incorrect');
-        }
+    // Validate and update new password
+    this.validatePassword(newPassword);
+    return this.update(id, { password: newPassword });
+  }
 
-        // Validate and update new password
-        this.validatePassword(newPassword);
-        return this.update(id, { password: newPassword });
-    }
-
-    async verifyPassword(userId, password) {
-        const user = await this.findById(userId);
-        return bcrypt.compare(password, user.password);
-    }
+  async verifyPassword(userId, password) {
+    const user = await this.findById(userId);
+    return bcrypt.compare(password, user.password);
+  }
 }
 
 module.exports = new UserService();

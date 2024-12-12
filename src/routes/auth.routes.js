@@ -11,10 +11,11 @@ router.post('/refresh', authController.refresh.bind(authController));
 
 // Protected routes
 router.post('/logout', authenticate, authController.logout.bind(authController));
-router.post('/change-password', 
-    authenticate, 
-    validate(schemas.changePassword),
-    authController.changePassword.bind(authController)
+router.post(
+  '/change-password',
+  authenticate,
+  validate(schemas.changePassword),
+  authController.changePassword.bind(authController)
 );
 
 module.exports = router;

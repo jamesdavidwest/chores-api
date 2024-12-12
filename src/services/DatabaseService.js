@@ -1,12 +1,14 @@
 // src/services/DatabaseService.js
 const knex = require('knex');
 const dbConfig = require('../config/database');
+const LoggerService = require('./LoggerService');
 
 class DatabaseService {
   constructor() {
     this.knex = null;
     this.config = null;
     this._connected = false;
+    this.logger = LoggerService.getInstance();
   }
 
   /**
@@ -17,20 +19,27 @@ class DatabaseService {
   async initialize(environment = process.env.NODE_ENV || 'development') {
     try {
       this.config = dbConfig[environment];
-      
+
       if (!this.config) {
         throw new Error(`Invalid environment: ${environment}`);
       }
 
       this.knex = knex(this.config);
-      
+
       // Test the connection
       await this.knex.raw('SELECT 1');
       this._connected = true;
-      
-      console.log(`Database connected successfully in ${environment} mode`);
+
+      this.logger.info('Database connection established', {
+        environment,
+        client: this.config.client,
+      });
     } catch (error) {
-      console.error('Database connection failed:', error);
+      this.logger.error('Database connection failed', {
+        error: error.message,
+        environment,
+        client: this.config?.client,
+      });
       throw error;
     }
   }
@@ -63,7 +72,7 @@ class DatabaseService {
     if (this._connected && this.knex) {
       await this.knex.destroy();
       this._connected = false;
-      console.log('Database connection closed');
+      this.logger.info('Database connection closed');
     }
   }
 

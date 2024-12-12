@@ -8,21 +8,31 @@ const responseHandler = (req, res, next) => {
   // Store the original res.json function
   const originalJson = res.json;
   const logger = LoggerService.getInstance();
-  
+
   // Override res.json to format all responses
-  res.json = function(body) {
+  res.json = function (body) {
     let response;
-    
+
     // If the response is already formatted, send it as is
-    if (body && (body.hasOwnProperty('success') && body.hasOwnProperty('metadata'))) {
+    if (
+      body &&
+      Object.prototype.hasOwnProperty.call(body, 'success') &&
+      Object.prototype.hasOwnProperty.call(body, 'metadata')
+    ) {
       response = body;
     } else {
-      // Format successful responses
-      response = ResponseFormatter.success(body, {
-        requestId: req.id, // Set by requestLogger middleware
+      // Format successful responses with configured metadata options
+      const metadata = {
+        requestId: responseConfig.metadata.includeRequestId ? req.id : undefined,
         path: req.path,
         method: req.method,
-      });
+        environment: responseConfig.metadata.includeEnvironment ? process.env.NODE_ENV : undefined,
+      };
+
+      // Remove undefined values
+      Object.keys(metadata).forEach((key) => metadata[key] === undefined && delete metadata[key]);
+
+      response = ResponseFormatter.success(body, metadata);
     }
 
     // Log the response if it's an error
@@ -48,19 +58,41 @@ const responseHandler = (req, res, next) => {
   };
 
   // Add convenience methods for common response patterns
-  res.success = function(data, metadata = {}) {
+  res.success = function (data, metadata = {}) {
     return res.json(ResponseFormatter.success(data, { ...metadata, requestId: req.id }));
   };
 
-  res.error = function(error, metadata = {}) {
+  res.error = function (error, metadata = {}) {
+    // Add error code prefix based on error type
+    if (error && error.code && !error.code.includes('_')) {
+      const errorType = error.type || 'system';
+      const prefix = responseConfig.errorCodes[errorType] || responseConfig.errorCodes.system;
+      error.code = `${prefix}${error.code}`;
+    }
+
     return res.json(ResponseFormatter.error(error, { ...metadata, requestId: req.id }));
   };
 
-  res.paginated = function(data, paginationData) {
-    return res.json(ResponseFormatter.withPagination(data, {
-      ...paginationData,
-      requestId: req.id,
-    }));
+  res.paginated = function (data, paginationOptions = {}) {
+    if (!Array.isArray(data)) {
+      throw new TypeError('Data must be an array for paginated responses');
+    }
+
+    // Apply pagination config defaults
+    const page = paginationOptions.page || responseConfig.pagination.defaultPage;
+    const limit = Math.min(
+      paginationOptions.limit || responseConfig.pagination.defaultLimit,
+      responseConfig.pagination.maxLimit
+    );
+
+    return res.json(
+      ResponseFormatter.withPagination(data, {
+        page,
+        limit,
+        total: paginationOptions.total || data.length,
+        requestId: req.id,
+      })
+    );
   };
 
   next();

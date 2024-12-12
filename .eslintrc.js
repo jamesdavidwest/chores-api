@@ -1,30 +1,23 @@
+// .eslintrc.js
 module.exports = {
   env: {
     node: true,
     es2021: true,
     jest: true,
   },
-  extends: [
-    'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:jest/recommended',
-    'prettier',
-  ],
-  parser: '@typescript-eslint/parser',
+  extends: ['eslint:recommended', 'plugin:prettier/recommended'],
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
   },
-  plugins: ['@typescript-eslint', 'jest', 'prettier'],
+  plugins: ['prettier'],
   rules: {
     'prettier/prettier': 'error',
-    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'no-console': 'warn',
     'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/no-explicit-any': 'warn',
-    'jest/expect-expect': 'error',
-    'jest/no-disabled-tests': 'warn',
-    'jest/no-focused-tests': 'error',
+    'no-process-exit': 'error',
+    'no-throw-literal': 'error',
+    'prefer-const': 'error',
+    'no-var': 'error',
   },
-  ignorePatterns: ['dist/', 'node_modules/', 'coverage/'],
-}
+};

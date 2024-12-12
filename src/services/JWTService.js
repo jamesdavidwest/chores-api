@@ -13,11 +13,9 @@ class JWTService {
 
   generateAccessToken(payload) {
     try {
-      return jwt.sign(
-        { ...payload, type: 'access' },
-        this.accessTokenSecret,
-        { expiresIn: this.accessTokenExpiry }
-      );
+      return jwt.sign({ ...payload, type: 'access' }, this.accessTokenSecret, {
+        expiresIn: this.accessTokenExpiry,
+      });
     } catch (error) {
       throw new AppError(500, 'AUTH001', 'Failed to generate access token', error);
     }
@@ -25,11 +23,9 @@ class JWTService {
 
   generateRefreshToken(payload) {
     try {
-      return jwt.sign(
-        { ...payload, type: 'refresh' },
-        this.refreshTokenSecret,
-        { expiresIn: this.refreshTokenExpiry }
-      );
+      return jwt.sign({ ...payload, type: 'refresh' }, this.refreshTokenSecret, {
+        expiresIn: this.refreshTokenExpiry,
+      });
     } catch (error) {
       throw new AppError(500, 'AUTH002', 'Failed to generate refresh token', error);
     }
@@ -39,19 +35,19 @@ class JWTService {
     try {
       const secret = type === 'access' ? this.accessTokenSecret : this.refreshTokenSecret;
       const decoded = jwt.verify(token, secret);
-      
+
       if (decoded.type !== type) {
         throw new AppError(401, 'AUTH003', `Invalid token type. Expected ${type} token.`);
       }
-      
+
       return decoded;
     } catch (error) {
       if (error instanceof AppError) throw error;
-      
+
       if (error.name === 'TokenExpiredError') {
         throw new AppError(401, 'AUTH004', `${type} token has expired`);
       }
-      
+
       throw new AppError(401, 'AUTH005', `Invalid ${type} token`, error);
     }
   }
@@ -59,14 +55,14 @@ class JWTService {
   generateTokenPair(payload) {
     return {
       accessToken: this.generateAccessToken(payload),
-      refreshToken: this.generateRefreshToken(payload)
+      refreshToken: this.generateRefreshToken(payload),
     };
   }
 
   refreshAccessToken(refreshToken) {
     const decoded = this.verifyToken(refreshToken, 'refresh');
     const { userId, instanceId, roles } = decoded;
-    
+
     return this.generateTokenPair({ userId, instanceId, roles });
   }
 }

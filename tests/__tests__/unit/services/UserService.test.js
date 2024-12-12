@@ -1,12 +1,12 @@
+// tests/__tests__/unit/services/UserService.test.js
+
 const UserService = require('../../../../src/services/UserService');
 const DatabaseService = require('../../../../src/services/DatabaseService');
 const testUtils = require('../../../testUtils');
 
 describe('UserService', () => {
-  let db;
-
   beforeAll(async () => {
-    db = DatabaseService.getInstance();
+    DatabaseService.getInstance();
   });
 
   beforeEach(async () => {
