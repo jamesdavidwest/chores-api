@@ -1,3 +1,5 @@
+// src/app.js
+
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -5,6 +7,7 @@ const helmet = require("helmet");
 const { config } = require("./config/auth");
 const { apiLimiter, authLimiter } = require("./middleware/rateLimiter");
 const requestLogger = require("./middleware/requestLogger");
+const responseHandler = require("./middleware/responseHandler");
 const errorHandler = require("./middleware/errorHandler");
 const logger = require("./services/LoggerService");
 
@@ -31,6 +34,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Response handler - after parsing, before routes
+app.use(responseHandler);
+
 // Apply rate limiting
 app.use("/api/", apiLimiter); // General API rate limiting
 app.use("/api/v1/auth", authLimiter); // Stricter limiting for auth routes
@@ -40,7 +46,7 @@ app.use("/api/v1/auth", authRoutes);
 
 // Basic health check endpoint
 app.get("/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
+  res.success({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 // Log uncaught API routes before 404
@@ -55,12 +61,9 @@ app.use((req, res, next) => {
 
 // 404 handler
 app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: {
-      code: "NOT_FOUND",
-      message: "Resource not found",
-    },
+  res.status(404).error({
+    code: "NOT_FOUND",
+    message: "Resource not found",
   });
 });
 
