@@ -10,7 +10,91 @@ const {
 
 const userService = new UserService();
 
-// Login route with enhanced logging
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     UserProfile:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           format: uuid
+ *           description: User's unique identifier
+ *         name:
+ *           type: string
+ *           description: User's full name
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: User's email address
+ *         role:
+ *           type: string
+ *           enum: [user, admin, manager]
+ *           description: User's role in the system
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *     LoginCredentials:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *           example: user@example.com
+ *         password:
+ *           type: string
+ *           format: password
+ *           example: "********"
+ *     TokenResponse:
+ *       type: object
+ *       properties:
+ *         token:
+ *           type: string
+ *           description: JWT access token
+ *         user:
+ *           $ref: '#/components/schemas/UserProfile'
+ */
+
+/**
+ * @swagger
+ * tags:
+ *   name: Authentication
+ *   description: User authentication and profile management
+ */
+
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Authenticate user and get JWT token
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginCredentials'
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TokenResponse'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.post("/login", validateLogin, async (req, res, next) => {
   console.log("Login attempt received:", {
     body: { ...req.body, password: "[REDACTED]" },
@@ -61,7 +145,30 @@ router.post("/login", validateLogin, async (req, res, next) => {
   }
 });
 
-// Get current user (/me endpoint)
+/**
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: Get current user's profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Current user profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserProfile'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get("/me", authenticate, async (req, res, next) => {
   try {
     console.log("Fetching current user profile:", req.user.id);
@@ -92,7 +199,36 @@ router.get("/me", authenticate, async (req, res, next) => {
   }
 });
 
-// Get user profile
+/**
+ * @swagger
+ * /auth/profile:
+ *   get:
+ *     summary: Get user's detailed profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: User's detailed profile information
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/UserProfile'
+ *                 - type: object
+ *                   properties:
+ *                     preferences:
+ *                       type: object
+ *                       description: User preferences and settings
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         description: Profile not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get("/profile", authenticate, async (req, res, next) => {
   try {
     console.log("Fetching profile for user:", req.user.id);
@@ -113,7 +249,53 @@ router.get("/profile", authenticate, async (req, res, next) => {
   }
 });
 
-// Update user profile with validation
+/**
+ * @swagger
+ * /auth/profile:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: User's full name
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: User's email address
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: New password (optional)
+ *               preferences:
+ *                 type: object
+ *                 description: User preferences
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserProfile'
+ *       400:
+ *         $ref: '#/components/responses/ValidationError'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.put(
   "/profile",
   authenticate,
@@ -149,13 +331,64 @@ router.put(
   }
 );
 
-// Verify token is valid
+/**
+ * @swagger
+ * /auth/verify:
+ *   post:
+ *     summary: Verify JWT token validity
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Token is valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 valid:
+ *                   type: boolean
+ *                   example: true
+ *                 user:
+ *                   $ref: '#/components/schemas/UserProfile'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ */
 router.post("/verify", authenticate, (req, res) => {
   console.log("Token verification successful for user:", req.user.id);
   res.json({ valid: true, user: req.user });
 });
 
-// Debug endpoint for development
+/**
+ * @swagger
+ * /auth/debug:
+ *   get:
+ *     summary: Get debug information (development only)
+ *     tags: [Authentication]
+ *     description: Development endpoint to get database state information
+ *     responses:
+ *       200:
+ *         description: Debug information retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/UserProfile'
+ *                 stats:
+ *                   type: object
+ *                   description: Database statistics
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get("/debug", async (req, res) => {
   try {
     console.log("Debug endpoint accessed");
