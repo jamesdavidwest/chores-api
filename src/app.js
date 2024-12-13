@@ -8,17 +8,23 @@ const { apiLimiter, authLimiter } = require("./middleware/rateLimiter");
 const requestLogger = require("./middleware/requestLogger");
 const responseHandler = require("./middleware/responseHandler");
 const errorHandler = require("./middleware/errorHandler");
+const performanceMonitor = require("./middleware/performanceMonitor");
 const setupSwagger = require("./middleware/swagger");
 const logger = require("./services/LoggerService");
+const PerformanceReportService = require("./services/PerformanceReportService");
 
 // Import routes
 const authRoutes = require("./routes/auth.routes");
+const performanceRoutes = require("./routes/api/performance.routes");
 
 // Create Express app
 const app = express();
 
 // Logging middleware - should be first to capture all requests
 app.use(requestLogger);
+
+// Performance monitoring - early in the middleware chain to capture accurate metrics
+app.use(performanceMonitor());
 
 // Security middleware
 app.use(
@@ -62,10 +68,27 @@ app.use("/api/v1/auth", authLimiter); // Stricter limiting for auth routes
 
 // API versioning and routes
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/performance", performanceRoutes);
 
-// Basic health check endpoint
+// Basic health check endpoint with performance metrics
 app.get("/health", (req, res) => {
-  res.success({ status: "ok", timestamp: new Date().toISOString() });
+  const MetricsCollector = require('../tests/benchmarks/collectors/MetricsCollector');
+  const metrics = MetricsCollector.getStatus();
+  
+  res.success({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    performance: {
+      metrics_collection: metrics.isCollecting ? 'active' : 'inactive',
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      cpu: process.cpuUsage(),
+      reporting: {
+        automated: PerformanceReportService.getConfig().isReportingActive,
+        interval: PerformanceReportService.getConfig().interval,
+      }
+    }
+  });
 });
 
 // Log uncaught API routes before 404
@@ -89,11 +112,23 @@ app.use((req, res) => {
 // Global error handler - must be last
 app.use(errorHandler);
 
-// Log application startup
+// Enhanced application startup with performance monitoring
 app.on("ready", () => {
+  const MetricsCollector = require('../tests/benchmarks/collectors/MetricsCollector');
+  
+  // Start automated performance reporting if enabled
+  if (process.env.ENABLE_AUTOMATED_PERFORMANCE_REPORTS === 'true') {
+    PerformanceReportService.startAutomatedReporting();
+  }
+  
   logger.info("Application started", {
     env: process.env.NODE_ENV,
     port: process.env.PORT,
+    performance_monitoring: {
+      enabled: true,
+      metrics_collection: MetricsCollector.getStatus().isCollecting ? 'active' : 'inactive',
+      automated_reporting: PerformanceReportService.getConfig().isReportingActive
+    }
   });
 });
 

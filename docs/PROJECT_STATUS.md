@@ -170,6 +170,7 @@ Implemented comprehensive events system with:
 ## 🔄 Currently In Progress
 
 ### 1. Testing Infrastructure
+
 - Unit tests implemented for core services:
   - EventService
   - InstanceService
@@ -186,6 +187,7 @@ Implemented comprehensive events system with:
   - Global test setup/teardown hooks
 
 Missing test coverage:
+
 - Service tests:
   - JWTService
   - LoggerService
