@@ -12,6 +12,24 @@
     "test:unit": "jest tests/__tests__/unit",
     "test:integration": "jest tests/__tests__/integration",
     "test:clear-cache": "jest --clearCache",
+    "test:load": "chmod +x scripts/run-load-tests.sh && ./scripts/run-load-tests.sh",
+    "test:load:auth": "npm run test:load -- -f auth.test.js -s constant",
+    "test:load:auth:stress": "npm run test:load -- -f auth.test.js -s stress",
+    "test:load:auth:spike": "npm run test:load -- -f auth.test.js -s spike",
+    "test:load:auth:ramp": "npm run test:load -- -f auth.test.js -s rampUp",
+    "test:load:events": "npm run test:load -- -f events.test.js -s constant",
+    "test:load:events:stress": "npm run test:load -- -f events.test.js -s stress",
+    "test:load:events:spike": "npm run test:load -- -f events.test.js -s spike",
+    "test:load:events:ramp": "npm run test:load -- -f events.test.js -s rampUp",
+    "test:load:all": "npm run test:load:auth && npm run test:load:events",
+    "test:load:all:stress": "npm run test:load:auth:stress && npm run test:load:events:stress",
+    "test:security": "chmod +x scripts/run-security-tests.sh && ./scripts/run-security-tests.sh",
+    "test:security:headers": "npm run test:security -- -t headers",
+    "test:security:auth": "npm run test:security -- -t auth",
+    "test:security:input": "npm run test:security -- -t input",
+    "test:security:rate": "npm run test:security -- -t rate",
+    "test:security:all": "npm run test:security -- -t all",
+    "test:security:ci": "npm run test:security -- -t all -e ci -r reports/security/ci",
     "migrate": "node src/db/migrate.js",
     "migrate:test": "NODE_ENV=test node src/db/migrate.js",
     "init-db": "node scripts/init-db.js",
@@ -66,6 +84,7 @@
     "eslint-plugin-prettier": "^5.2.1",
     "jest": "^29.7.0",
     "jest-junit": "^16.0.0",
+    "k6": "^0.0.0",
     "nodemon": "^3.1.7",
     "prettier": "^3.2.5",
     "supertest": "^7.0.0"
@@ -73,10 +92,12 @@
   "jest": {
     "testEnvironment": "node",
     "testMatch": [
-      "**/__tests__/**/*.test.js"
+      "**/__tests__/**/*.test.js",
+      "**/tests/**/*.test.js"
     ],
     "testPathIgnorePatterns": [
-      "/node_modules/"
+      "/node_modules/",
+      "/tests/load/"
     ],
     "collectCoverage": true,
     "coverageDirectory": "coverage",
@@ -94,6 +115,13 @@
     "testTimeout": 10000,
     "setupFiles": [
       "<rootDir>/tests/setup.js"
-    ]
+    ],
+    "reporters": [
+      "default",
+      "jest-junit"
+    ],
+    "testEnvironmentOptions": {
+      "url": "http://localhost"
+    }
   }
 }
