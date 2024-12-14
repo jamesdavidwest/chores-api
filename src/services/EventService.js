@@ -15,13 +15,45 @@ class EventService {
    * @returns {Promise<Object>} Created event
    */
   async createEvent(eventData) {
+    const trx = await this.db.transaction();
+    
     try {
-      const [event] = await this.db(this.tableName)
+      // If this is a child event, verify parent exists and calculate hierarchy
+      if (eventData.parent_id) {
+        const parent = await trx(this.tableName)
+          .where({ id: eventData.parent_id })
+          .first();
+
+        if (!parent) {
+          throw new AppError(
+            ErrorTypes.NOT_FOUND,
+            this.serviceName,
+            "createEvent",
+            {
+              resource: "Parent Event",
+              id: eventData.parent_id
+            }
+          );
+        }
+
+        // Calculate hierarchy path
+        const parentPath = parent.hierarchy_path ? JSON.parse(parent.hierarchy_path) : [];
+        eventData.hierarchy_path = JSON.stringify([...parentPath, parent.id]);
+      } else {
+        eventData.hierarchy_path = JSON.stringify([]);
+      }
+
+      const [event] = await trx(this.tableName)
         .insert(eventData)
         .returning("*");
 
+      // Create audit log entry
+      await this._createAuditLog(trx, event.id, "CREATE", null, event, eventData.user_id);
+
+      await trx.commit();
       return event;
     } catch (error) {
+      await trx.rollback();
       throw this._handleError(error, "createEvent", { eventData });
     }
   }
@@ -36,12 +68,37 @@ class EventService {
 
     try {
       const createdEvents = await Promise.all(
-        events.map((event) =>
-          trx(this.tableName)
+        events.map(async (event) => {
+          if (event.parent_id) {
+            const parent = await trx(this.tableName)
+              .where({ id: event.parent_id })
+              .first();
+
+            if (!parent) {
+              throw new AppError(
+                ErrorTypes.NOT_FOUND,
+                this.serviceName,
+                "createManyEvents",
+                {
+                  resource: "Parent Event",
+                  id: event.parent_id
+                }
+              );
+            }
+
+            const parentPath = parent.hierarchy_path ? JSON.parse(parent.hierarchy_path) : [];
+            event.hierarchy_path = JSON.stringify([...parentPath, parent.id]);
+          } else {
+            event.hierarchy_path = JSON.stringify([]);
+          }
+
+          const [createdEvent] = await trx(this.tableName)
             .insert(event)
-            .returning("*")
-            .then(([result]) => result)
-        )
+            .returning("*");
+
+          await this._createAuditLog(trx, createdEvent.id, "CREATE", null, createdEvent, event.user_id);
+          return createdEvent;
+        })
       );
 
       await trx.commit();
@@ -83,6 +140,60 @@ class EventService {
   }
 
   /**
+   * Get all children of an event
+   * @param {string|number} parentId
+   * @returns {Promise<Array<Object>>} Child events
+   */
+  async getEventChildren(parentId) {
+    try {
+      return await this.db(this.tableName)
+        .where({ parent_id: parentId })
+        .orderBy('created_at', 'asc');
+    } catch (error) {
+      throw this._handleError(error, "getEventChildren", { parentId });
+    }
+  }
+
+  /**
+   * Get complete event hierarchy
+   * @param {string|number} eventId
+   * @returns {Promise<Object>} Event hierarchy
+   */
+  async getEventHierarchy(eventId) {
+    try {
+      const event = await this.getEventById(eventId);
+      const hierarchyPath = JSON.parse(event.hierarchy_path || '[]');
+      
+      const children = await this.getEventChildren(eventId);
+      const childHierarchies = await Promise.all(
+        children.map(child => this.getEventHierarchy(child.id))
+      );
+
+      return {
+        ...event,
+        children: childHierarchies
+      };
+    } catch (error) {
+      throw this._handleError(error, "getEventHierarchy", { eventId });
+    }
+  }
+
+  /**
+   * Get event audit history
+   * @param {string|number} eventId
+   * @returns {Promise<Array<Object>>} Audit log entries
+   */
+  async getEventAuditHistory(eventId) {
+    try {
+      return await this.db('event_audit_log')
+        .where({ event_id: eventId })
+        .orderBy('created_at', 'desc');
+    } catch (error) {
+      throw this._handleError(error, "getEventAuditHistory", { eventId });
+    }
+  }
+
+  /**
    * Get events with pagination and filters
    * @param {Object} options Query options
    * @returns {Promise<{data: Array<Object>, pagination: Object}>}
@@ -95,6 +206,7 @@ class EventService {
       endDate,
       type,
       status,
+      parent_id,
       sortBy = "created_at",
       sortOrder = "desc",
     } = options;
@@ -113,6 +225,9 @@ class EventService {
           }
           if (status) {
             queryBuilder.where({ status });
+          }
+          if (parent_id !== undefined) {
+            queryBuilder.where({ parent_id });
           }
         })
         .orderBy(sortBy, sortOrder);
@@ -145,13 +260,12 @@ class EventService {
    * @returns {Promise<Object>} Updated event
    */
   async updateEvent(id, updateData) {
-    try {
-      const [event] = await this.db(this.tableName)
-        .where({ id })
-        .update(updateData)
-        .returning("*");
+    const trx = await this.db.transaction();
 
-      if (!event) {
+    try {
+      const oldEvent = await trx(this.tableName).where({ id }).first();
+
+      if (!oldEvent) {
         throw new AppError(
           ErrorTypes.NOT_FOUND,
           this.serviceName,
@@ -164,8 +278,18 @@ class EventService {
         );
       }
 
+      const [event] = await trx(this.tableName)
+        .where({ id })
+        .update(updateData)
+        .returning("*");
+
+      // Create audit log entry
+      await this._createAuditLog(trx, id, "UPDATE", oldEvent, event, updateData.user_id);
+
+      await trx.commit();
       return event;
     } catch (error) {
+      await trx.rollback();
       throw this._handleError(error, "updateEvent", { id, updateData });
     }
   }
@@ -176,10 +300,12 @@ class EventService {
    * @returns {Promise<boolean>} Success status
    */
   async deleteEvent(id) {
-    try {
-      const deleted = await this.db(this.tableName).where({ id }).delete();
+    const trx = await this.db.transaction();
 
-      if (!deleted) {
+    try {
+      const event = await trx(this.tableName).where({ id }).first();
+
+      if (!event) {
         throw new AppError(
           ErrorTypes.NOT_FOUND,
           this.serviceName,
@@ -192,8 +318,15 @@ class EventService {
         );
       }
 
+      // Create audit log entry before deletion
+      await this._createAuditLog(trx, id, "DELETE", event, null, event.user_id);
+
+      await trx(this.tableName).where({ id }).delete();
+
+      await trx.commit();
       return true;
     } catch (error) {
+      await trx.rollback();
       throw this._handleError(error, "deleteEvent", { id });
     }
   }
@@ -251,6 +384,34 @@ class EventService {
     } catch (error) {
       throw this._handleError(error, "searchEvents", { query });
     }
+  }
+
+  /**
+   * Create an audit log entry
+   * @private
+   * @param {Object} trx Transaction object
+   * @param {string|number} eventId
+   * @param {string} action
+   * @param {Object} oldData
+   * @param {Object} newData
+   * @param {string|number} userId
+   * @returns {Promise<Object>} Created audit log entry
+   */
+  async _createAuditLog(trx, eventId, action, oldData, newData, userId) {
+    const auditEntry = {
+      event_id: eventId,
+      action,
+      old_data: oldData ? JSON.stringify(oldData) : null,
+      new_data: newData ? JSON.stringify(newData) : null,
+      user_id: userId,
+      created_at: new Date()
+    };
+
+    const [entry] = await trx('event_audit_log')
+      .insert(auditEntry)
+      .returning('*');
+
+    return entry;
   }
 
   /**
