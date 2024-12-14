@@ -1,12 +1,14 @@
-const WebSocket = require('ws');
+const { WebSocketPool, CONSTANTS } = require('../utils/websocket');
 const RealTimeMetricsService = require('./RealTimeMetricsService');
 const logger = require('./LoggerService');
 
 class MetricsWebSocketService {
     constructor() {
-        this.wss = null;
-        this.clients = new Map(); // Map client ID to WebSocket connection
+        this.pool = new WebSocketPool({
+            maxConnections: 1000 // Configurable max clients
+        });
         this.subscriptions = new Map(); // Map client ID to metric subscription IDs
+        this.clientMetadata = new Map(); // Store additional client information
     }
 
     /**
@@ -15,6 +17,7 @@ class MetricsWebSocketService {
      * @param {Object} options - Configuration options
      */
     initialize(server, options = {}) {
+        const WebSocket = require('ws');
         this.wss = new WebSocket.Server({
             server,
             path: options.path || '/ws/metrics',
@@ -24,7 +27,8 @@ class MetricsWebSocketService {
         this.wss.on('connection', this._handleConnection.bind(this));
 
         logger.info('Metrics WebSocket server initialized', {
-            path: options.path || '/ws/metrics'
+            path: options.path || '/ws/metrics',
+            maxConnections: this.pool.options.maxConnections
         });
     }
 
@@ -32,58 +36,81 @@ class MetricsWebSocketService {
      * Handle new WebSocket connection
      * @private
      * @param {WebSocket} ws - WebSocket connection
+     * @param {Object} request - HTTP request object
      */
-    _handleConnection(ws) {
-        const clientId = Math.random().toString(36).substring(2);
-        this.clients.set(clientId, ws);
+    async _handleConnection(ws, request) {
+        const clientId = this._generateClientId();
+        
+        try {
+            // Create managed connection in pool
+            const connection = await this.pool.createConnection(clientId, null, {
+                autoReconnect: true,
+                queueMessages: true,
+                enableHeartbeat: true,
+                existingSocket: ws // Pass existing socket to pool
+            });
 
-        // Send initial metrics snapshot
-        const snapshot = RealTimeMetricsService.getMetricsSnapshot();
-        ws.send(JSON.stringify({
-            type: 'snapshot',
-            data: snapshot
-        }));
+            // Store client metadata
+            this.clientMetadata.set(clientId, {
+                connectedAt: Date.now(),
+                ip: request.socket.remoteAddress,
+                userAgent: request.headers['user-agent'],
+                lastActivity: Date.now()
+            });
 
-        // Subscribe to real-time metrics updates
-        const subscriptionId = RealTimeMetricsService.subscribe((update) => {
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send(JSON.stringify({
-                    type: 'update',
-                    data: update
-                }));
-            }
-        });
+            // Send initial metrics snapshot
+            const snapshot = RealTimeMetricsService.getMetricsSnapshot();
+            connection.send(JSON.stringify({
+                type: 'snapshot',
+                data: snapshot
+            }));
 
-        this.subscriptions.set(clientId, subscriptionId);
+            // Subscribe to real-time metrics updates
+            const subscriptionId = RealTimeMetricsService.subscribe((update) => {
+                if (connection.isConnected()) {
+                    connection.send(JSON.stringify({
+                        type: 'update',
+                        data: update
+                    })).catch(error => {
+                        logger.error('Error sending metric update', {
+                            clientId,
+                            error: error.message
+                        });
+                    });
+                }
+            });
 
-        // Handle client messages
-        ws.on('message', (message) => {
-            try {
-                const data = JSON.parse(message);
-                this._handleClientMessage(clientId, data);
-            } catch (error) {
-                logger.error('Error handling WebSocket message', {
+            this.subscriptions.set(clientId, subscriptionId);
+
+            // Set up connection event handlers
+            connection.on('message', (message) => {
+                this._handleClientMessage(clientId, message);
+                this._updateClientActivity(clientId);
+            });
+
+            connection.on('error', (error) => {
+                logger.error('WebSocket client error', {
                     clientId,
                     error: error.message
                 });
-            }
-        });
+            });
 
-        // Handle client disconnection
-        ws.on('close', () => {
-            this._handleDisconnection(clientId);
-        });
+            connection.on('disconnected', () => {
+                this._handleDisconnection(clientId);
+            });
 
-        // Handle errors
-        ws.on('error', (error) => {
-            logger.error('WebSocket client error', {
+            logger.debug('New WebSocket client connected', {
+                clientId,
+                ...this.clientMetadata.get(clientId)
+            });
+
+        } catch (error) {
+            logger.error('Error setting up client connection', {
                 clientId,
                 error: error.message
             });
-            this._handleDisconnection(clientId);
-        });
-
-        logger.debug('New WebSocket client connected', { clientId });
+            ws.terminate();
+        }
     }
 
     /**
@@ -93,42 +120,50 @@ class MetricsWebSocketService {
      * @param {Object} message - Client message
      */
     _handleClientMessage(clientId, message) {
-        const ws = this.clients.get(clientId);
-        if (!ws) return;
+        const connection = this.pool.getConnection(clientId);
+        if (!connection) return;
 
-        switch (message.type) {
-            case 'ping':
-                ws.send(JSON.stringify({ type: 'pong' }));
-                break;
+        try {
+            const parsedMessage = JSON.parse(message);
 
-            case 'subscribe':
-                if (Array.isArray(message.metrics)) {
-                    // Update client's subscription preferences
-                    this._updateClientSubscription(clientId, message.metrics);
-                }
-                break;
+            switch (parsedMessage.type) {
+                case 'subscribe':
+                    if (Array.isArray(parsedMessage.metrics)) {
+                        this._updateClientSubscription(clientId, parsedMessage.metrics);
+                    }
+                    break;
 
-            case 'getSnapshot':
-                const snapshot = RealTimeMetricsService.getMetricsSnapshot();
-                ws.send(JSON.stringify({
-                    type: 'snapshot',
-                    data: snapshot
-                }));
-                break;
+                case 'getSnapshot':
+                    const snapshot = RealTimeMetricsService.getMetricsSnapshot();
+                    connection.send(JSON.stringify({
+                        type: 'snapshot',
+                        data: snapshot
+                    }));
+                    break;
 
-            case 'getHistory':
-                const history = this._getMetricsHistory(message.metricType, message.duration);
-                ws.send(JSON.stringify({
-                    type: 'history',
-                    data: history
-                }));
-                break;
+                case 'getHistory':
+                    const history = this._getMetricsHistory(
+                        parsedMessage.metricType,
+                        parsedMessage.duration
+                    );
+                    connection.send(JSON.stringify({
+                        type: 'history',
+                        data: history
+                    }));
+                    break;
 
-            default:
-                logger.warn('Unknown WebSocket message type', {
-                    clientId,
-                    messageType: message.type
-                });
+                default:
+                    logger.warn('Unknown WebSocket message type', {
+                        clientId,
+                        messageType: parsedMessage.type
+                    });
+            }
+        } catch (error) {
+            logger.error('Error handling WebSocket message', {
+                clientId,
+                error: error.message,
+                message
+            });
         }
     }
 
@@ -145,8 +180,11 @@ class MetricsWebSocketService {
             this.subscriptions.delete(clientId);
         }
 
-        // Remove client from active clients
-        this.clients.delete(clientId);
+        // Remove client metadata
+        this.clientMetadata.delete(clientId);
+
+        // Remove from connection pool
+        this.pool.removeConnection(clientId);
 
         logger.debug('WebSocket client disconnected', { clientId });
     }
@@ -158,8 +196,8 @@ class MetricsWebSocketService {
      * @param {Array<string>} metrics - Metric types to subscribe to
      */
     _updateClientSubscription(clientId, metrics) {
-        const ws = this.clients.get(clientId);
-        if (!ws) return;
+        const connection = this.pool.getConnection(clientId);
+        if (!connection) return;
 
         // Remove existing subscription
         const oldSubscriptionId = this.subscriptions.get(clientId);
@@ -169,11 +207,16 @@ class MetricsWebSocketService {
 
         // Create new filtered subscription
         const subscriptionId = RealTimeMetricsService.subscribe((update) => {
-            if (ws.readyState === WebSocket.OPEN && metrics.includes(update.type)) {
-                ws.send(JSON.stringify({
+            if (connection.isConnected() && metrics.includes(update.type)) {
+                connection.send(JSON.stringify({
                     type: 'update',
                     data: update
-                }));
+                })).catch(error => {
+                    logger.error('Error sending metric update', {
+                        clientId,
+                        error: error.message
+                    });
+                });
             }
         });
 
@@ -196,15 +239,35 @@ class MetricsWebSocketService {
         const now = Date.now();
         const snapshot = RealTimeMetricsService.getMetricsSnapshot();
         
-        // Filter events by time and type
         if (metricType === 'events') {
             return snapshot.events.filter(event => 
                 (now - event.timestamp) <= duration
             );
         }
 
-        // Return specific metric type history
         return snapshot[metricType] || [];
+    }
+
+    /**
+     * Generate unique client identifier
+     * @private
+     * @returns {string} Client ID
+     */
+    _generateClientId() {
+        return `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    /**
+     * Update client's last activity timestamp
+     * @private
+     * @param {string} clientId - Client identifier
+     */
+    _updateClientActivity(clientId) {
+        const metadata = this.clientMetadata.get(clientId);
+        if (metadata) {
+            metadata.lastActivity = Date.now();
+            this.clientMetadata.set(clientId, metadata);
+        }
     }
 
     /**
@@ -212,58 +275,70 @@ class MetricsWebSocketService {
      * @param {Object} message - Message to broadcast
      */
     broadcast(message) {
-        this.clients.forEach((ws, clientId) => {
-            if (ws.readyState === WebSocket.OPEN) {
-                try {
-                    ws.send(JSON.stringify(message));
-                } catch (error) {
+        const serializedMessage = JSON.stringify(message);
+        
+        this.pool.connections.forEach((connection, clientId) => {
+            if (connection.isConnected()) {
+                connection.send(serializedMessage).catch(error => {
                     logger.error('Error broadcasting to client', {
                         clientId,
                         error: error.message
                     });
-                }
+                });
             }
         });
     }
 
     /**
-     * Get current status of the WebSocket service
+     * Get current service status
      * @returns {Object} Service status
      */
     getStatus() {
+        const poolStatus = this.pool.getStatus();
+        
         return {
-            isRunning: !!this.wss,
-            connectedClients: this.clients.size,
-            activeSubscriptions: this.subscriptions.size
+            ...poolStatus,
+            subscriptions: this.subscriptions.size,
+            clientsMetadata: {
+                total: this.clientMetadata.size,
+                active: Array.from(this.clientMetadata.values())
+                    .filter(meta => Date.now() - meta.lastActivity < 60000).length
+            }
         };
+    }
+
+    /**
+     * Clean up inactive clients
+     * @private
+     */
+    _cleanupInactiveClients() {
+        const now = Date.now();
+        const inactivityThreshold = 5 * 60 * 1000; // 5 minutes
+
+        this.clientMetadata.forEach((metadata, clientId) => {
+            if (now - metadata.lastActivity > inactivityThreshold) {
+                logger.info('Cleaning up inactive client', { clientId });
+                this._handleDisconnection(clientId);
+            }
+        });
     }
 
     /**
      * Close all connections and shutdown the server
      */
     shutdown() {
+        // Clean up all client connections
+        this.pool.closeAll();
+
+        // Clear all maps
+        this.subscriptions.clear();
+        this.clientMetadata.clear();
+
+        // Close the WebSocket server
         if (this.wss) {
-            // Close all client connections
-            this.clients.forEach((ws, clientId) => {
-                try {
-                    ws.close();
-                } catch (error) {
-                    logger.error('Error closing client connection', {
-                        clientId,
-                        error: error.message
-                    });
-                }
-            });
-
-            // Clear all maps
-            this.clients.clear();
-            this.subscriptions.clear();
-
-            // Close the server
             this.wss.close(() => {
                 logger.info('Metrics WebSocket server shut down');
             });
-
             this.wss = null;
         }
     }
