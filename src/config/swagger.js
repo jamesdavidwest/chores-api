@@ -48,6 +48,11 @@ const swaggerOptions = {
           scheme: "bearer",
           bearerFormat: "JWT",
         },
+        apiKeyAuth: {
+          type: "apiKey",
+          in: "header",
+          name: process.env.API_KEY_HEADER || "X-API-Key",
+        },
       },
       responses: {
         UnauthorizedError: {
@@ -111,61 +116,66 @@ const swaggerOptions = {
             },
           },
         },
-      },
-      schemas: {
-        Error: {
-          type: "object",
-          properties: {
-            success: {
-              type: "boolean",
-              example: false,
-            },
-            error: {
-              type: "object",
-              properties: {
-                code: {
-                  type: "string",
-                },
-                message: {
-                  type: "string",
-                },
-                details: {
-                  type: "object",
+        ForbiddenError: {
+          description: "Insufficient permissions",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  success: {
+                    type: "boolean",
+                    example: false,
+                  },
+                  error: {
+                    type: "object",
+                    properties: {
+                      code: {
+                        type: "string",
+                        example: "AUTH003",
+                      },
+                      message: {
+                        type: "string",
+                        example: "Insufficient permissions",
+                      },
+                    },
+                  },
                 },
               },
             },
           },
         },
-        Pagination: {
-          type: "object",
-          properties: {
-            page: {
-              type: "integer",
-              minimum: 1,
-              example: 1,
-            },
-            limit: {
-              type: "integer",
-              minimum: 1,
-              example: 10,
-            },
-            total: {
-              type: "integer",
-              example: 100,
-            },
-            hasMore: {
-              type: "boolean",
-              example: true,
-            },
-          },
-        },
       },
     },
+    security: [{ bearerAuth: [] }],
+    tags: [
+      {
+        name: "Authentication",
+        description: "Authentication and authorization endpoints",
+      },
+      {
+        name: "Security",
+        description: "Security and access control endpoints",
+      },
+      {
+        name: "Performance",
+        description: "Performance monitoring and metrics endpoints",
+      },
+      {
+        name: "Events",
+        description: "Event management endpoints",
+      },
+      {
+        name: "Instances",
+        description: "Instance management endpoints",
+      },
+    ],
   },
   apis: [
     path.join(__dirname, "../routes/**/*.js"),
     path.join(__dirname, "../models/**/*.js"),
     path.join(__dirname, "../schemas/**/*.js"),
+    path.join(__dirname, "../schemas/api.schemas.js"),
   ],
 };
 

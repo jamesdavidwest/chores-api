@@ -1,20 +1,33 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { debounce } from 'lodash';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  AlertCircle, 
-  CheckCircle2, 
+import React, { useState, useEffect, useCallback } from "react";
+import { debounce } from "lodash";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertCircle,
+  CheckCircle2,
   History,
   Save,
-  RotateCcw
-} from 'lucide-react';
+  RotateCcw,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -25,30 +38,29 @@ import {
 } from "@/components/ui/dialog";
 
 // Metric Threshold Configuration Component (reused from AlertConfigForm)
-const MetricThresholdConfig = ({ 
-  metricName, 
-  threshold, 
-  onChange, 
-  unit = '', 
-  description = '',
-  previousValue = null
+const MetricThresholdConfig = ({
+  metricName,
+  threshold,
+  onChange,
+  unit = "",
+  description = "",
+  previousValue = null,
 }) => (
   <div className="space-y-2">
     <Label className="text-sm font-medium">{metricName}</Label>
-    {description && (
-      <p className="text-xs text-gray-500">{description}</p>
-    )}
+    {description && <p className="text-xs text-gray-500">{description}</p>}
     <div className="flex items-center space-x-2">
       <Input
         type="number"
         value={threshold}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className={`w-24 ${previousValue !== null && previousValue !== threshold ? 'border-yellow-500' : ''}`}
+        className={`w-24 ${previousValue !== null && previousValue !== threshold ? "border-yellow-500" : ""}`}
       />
       {unit && <span className="text-sm text-gray-500">{unit}</span>}
       {previousValue !== null && previousValue !== threshold && (
         <span className="text-xs text-yellow-600">
-          Previous: {previousValue}{unit}
+          Previous: {previousValue}
+          {unit}
         </span>
       )}
     </div>
@@ -65,12 +77,13 @@ const HistoryDialog = ({ configId, isOpen, onClose }) => {
     const fetchHistory = async () => {
       try {
         setLoading(true);
-        const configHistory = await window.AlertNotificationService.getConfigHistory(configId);
+        const configHistory =
+          await window.AlertNotificationService.getConfigHistory(configId);
         setHistory(configHistory);
         setError(null);
       } catch (err) {
-        setError('Failed to load configuration history');
-        console.error('Error fetching history:', err);
+        setError("Failed to load configuration history");
+        console.error("Error fetching history:", err);
       } finally {
         setLoading(false);
       }
@@ -89,7 +102,7 @@ const HistoryDialog = ({ configId, isOpen, onClose }) => {
           View previous versions and changes
         </DialogDescription>
       </DialogHeader>
-      
+
       <div className="max-h-96 overflow-y-auto">
         {loading ? (
           <div className="text-center py-4">Loading history...</div>
@@ -108,7 +121,7 @@ const HistoryDialog = ({ configId, isOpen, onClose }) => {
                       {new Date(entry.timestamp).toLocaleString()}
                     </h4>
                     <p className="text-sm text-gray-500">
-                      Changed by: {entry.user || 'System'}
+                      Changed by: {entry.user || "System"}
                     </p>
                   </div>
                   <Button
@@ -123,9 +136,9 @@ const HistoryDialog = ({ configId, isOpen, onClose }) => {
                 <div className="mt-2 space-y-2">
                   {entry.changes.map((change, changeIndex) => (
                     <p key={changeIndex} className="text-sm">
-                      <span className="font-medium">{change.field}:</span>{' '}
-                      <span className="text-red-500">{change.oldValue}</span>{' '}
-                      → <span className="text-green-500">{change.newValue}</span>
+                      <span className="font-medium">{change.field}:</span>{" "}
+                      <span className="text-red-500">{change.oldValue}</span> →{" "}
+                      <span className="text-green-500">{change.newValue}</span>
                     </p>
                   ))}
                 </div>
@@ -158,34 +171,33 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
     const connectWebSocket = () => {
       try {
         ws = window.MetricsWebSocketService.connect();
-        
-        ws.addEventListener('open', () => {
+
+        ws.addEventListener("open", () => {
           setWsConnected(true);
-          console.log('WebSocket connected');
+          console.log("WebSocket connected");
         });
 
-        ws.addEventListener('close', () => {
+        ws.addEventListener("close", () => {
           setWsConnected(false);
-          console.log('WebSocket disconnected');
+          console.log("WebSocket disconnected");
           setTimeout(connectWebSocket, 5000);
         });
 
-        ws.addEventListener('message', (event) => {
+        ws.addEventListener("message", (event) => {
           const data = JSON.parse(event.data);
-          
-          if (data.type === 'CONFIG_UPDATE' && data.payload.id === configId) {
+
+          if (data.type === "CONFIG_UPDATE" && data.payload.id === configId) {
             handleExternalUpdate(data.payload);
           }
         });
 
-        ws.addEventListener('error', (error) => {
-          console.error('WebSocket error:', error);
-          setError('WebSocket connection error');
+        ws.addEventListener("error", (error) => {
+          console.error("WebSocket error:", error);
+          setError("WebSocket connection error");
         });
-
       } catch (error) {
-        console.error('Failed to connect to WebSocket:', error);
-        setError('Failed to establish real-time connection');
+        console.error("Failed to connect to WebSocket:", error);
+        setError("Failed to establish real-time connection");
       }
     };
 
@@ -203,13 +215,14 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
     const fetchConfig = async () => {
       try {
         setLoading(true);
-        const config = await window.AlertNotificationService.getAlertConfig(configId);
+        const config =
+          await window.AlertNotificationService.getAlertConfig(configId);
         setOriginalConfig(config);
         setFormState(config);
         setError(null);
       } catch (err) {
-        setError('Failed to load alert configuration');
-        console.error('Error fetching configuration:', err);
+        setError("Failed to load alert configuration");
+        console.error("Error fetching configuration:", err);
       } finally {
         setLoading(false);
       }
@@ -221,7 +234,8 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
   // Track changes
   useEffect(() => {
     if (originalConfig && formState) {
-      const changed = JSON.stringify(originalConfig) !== JSON.stringify(formState);
+      const changed =
+        JSON.stringify(originalConfig) !== JSON.stringify(formState);
       setHasChanges(changed);
     }
   }, [originalConfig, formState]);
@@ -229,7 +243,11 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
   // Handle external updates
   const handleExternalUpdate = (updatedConfig) => {
     if (hasChanges) {
-      if (window.confirm('This configuration has been updated externally. Would you like to load the new version? Your unsaved changes will be lost.')) {
+      if (
+        window.confirm(
+          "This configuration has been updated externally. Would you like to load the new version? Your unsaved changes will be lost."
+        )
+      ) {
         setOriginalConfig(updatedConfig);
         setFormState(updatedConfig);
       }
@@ -244,7 +262,8 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
     debounce(async (config) => {
       try {
         if (wsConnected) {
-          const validationResult = await window.AlertNotificationService.validateConfig(config);
+          const validationResult =
+            await window.AlertNotificationService.validateConfig(config);
           if (!validationResult.isValid) {
             setError(validationResult.message);
           } else {
@@ -252,7 +271,7 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
           }
         }
       } catch (err) {
-        console.error('Validation error:', err);
+        console.error("Validation error:", err);
       }
     }, 500),
     [wsConnected]
@@ -262,39 +281,42 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
   const handleInputChange = (field, value) => {
     const newState = {
       ...formState,
-      [field]: value
+      [field]: value,
     };
-    
+
     setFormState(newState);
     debouncedValidate(newState);
   };
 
   // Handle metric threshold changes
   const handleMetricChange = (category, metric, value) => {
-    setFormState(prev => ({
+    setFormState((prev) => ({
       ...prev,
       [category]: {
         ...prev[category],
-        [metric]: value
-      }
+        [metric]: value,
+      },
     }));
   };
 
   // Form validation
   const validateForm = () => {
     if (!formState.name.trim()) {
-      setError('Alert configuration name is required');
+      setError("Alert configuration name is required");
       return false;
     }
 
     const { systemMetrics, applicationMetrics, databaseMetrics } = formState;
 
     if (
-      systemMetrics.cpuUsage < 0 || systemMetrics.cpuUsage > 100 ||
-      systemMetrics.memoryUsage < 0 || systemMetrics.memoryUsage > 100 ||
-      systemMetrics.diskUsage < 0 || systemMetrics.diskUsage > 100
+      systemMetrics.cpuUsage < 0 ||
+      systemMetrics.cpuUsage > 100 ||
+      systemMetrics.memoryUsage < 0 ||
+      systemMetrics.memoryUsage > 100 ||
+      systemMetrics.diskUsage < 0 ||
+      systemMetrics.diskUsage > 100
     ) {
-      setError('System metric thresholds must be between 0 and 100');
+      setError("System metric thresholds must be between 0 and 100");
       return false;
     }
 
@@ -303,16 +325,17 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
       applicationMetrics.responseTime < 0 ||
       applicationMetrics.requestQueueSize < 0
     ) {
-      setError('Application metric thresholds cannot be negative');
+      setError("Application metric thresholds cannot be negative");
       return false;
     }
 
     if (
-      databaseMetrics.connectionPoolUsage < 0 || databaseMetrics.connectionPoolUsage > 100 ||
+      databaseMetrics.connectionPoolUsage < 0 ||
+      databaseMetrics.connectionPoolUsage > 100 ||
       databaseMetrics.queryTime < 0 ||
       databaseMetrics.deadlockCount < 0
     ) {
-      setError('Database metric thresholds are invalid');
+      setError("Database metric thresholds are invalid");
       return false;
     }
 
@@ -334,17 +357,20 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
 
       const updatedConfig = {
         ...formState,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
 
       // Send to AlertNotificationService
-      const result = await window.AlertNotificationService.updateAlertConfig(configId, updatedConfig);
+      const result = await window.AlertNotificationService.updateAlertConfig(
+        configId,
+        updatedConfig
+      );
 
       // Notify through WebSocket
       if (wsConnected) {
         window.MetricsWebSocketService.send({
-          type: 'CONFIG_UPDATE',
-          payload: result
+          type: "CONFIG_UPDATE",
+          payload: result,
         });
       }
 
@@ -354,7 +380,7 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
         onSave(result);
       }
     } catch (err) {
-      setError(err.message || 'Failed to update alert configuration');
+      setError(err.message || "Failed to update alert configuration");
     } finally {
       setIsSubmitting(false);
     }
@@ -366,20 +392,20 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
       setHistoryDialogOpen(false);
       setFormState(historicalConfig);
       setError(null);
-      
+
       // Optionally auto-save the restored version
-      if (window.confirm('Would you like to save the restored version?')) {
+      if (window.confirm("Would you like to save the restored version?")) {
         await handleSubmit({ preventDefault: () => {} });
       }
     } catch (err) {
-      setError('Failed to restore configuration version');
-      console.error('Error restoring configuration:', err);
+      setError("Failed to restore configuration version");
+      console.error("Error restoring configuration:", err);
     }
   };
 
   // Reset changes
   const handleReset = () => {
-    if (window.confirm('Are you sure you want to reset all changes?')) {
+    if (window.confirm("Are you sure you want to reset all changes?")) {
       setFormState(originalConfig);
       setError(null);
       setSuccess(false);
@@ -413,7 +439,7 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
                 History
               </Button>
             </DialogTrigger>
-            <HistoryDialog 
+            <HistoryDialog
               configId={configId}
               isOpen={historyDialogOpen}
               onClose={handleHistoryRestore}
@@ -429,8 +455,12 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
               <Input
                 id="name"
                 value={formState.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-                className={originalConfig.name !== formState.name ? 'border-yellow-500' : ''}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                className={
+                  originalConfig.name !== formState.name
+                    ? "border-yellow-500"
+                    : ""
+                }
               />
               {originalConfig.name !== formState.name && (
                 <p className="text-xs text-yellow-600">
@@ -444,8 +474,14 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
               <Input
                 id="description"
                 value={formState.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                className={originalConfig.description !== formState.description ? 'border-yellow-500' : ''}
+                onChange={(e) =>
+                  handleInputChange("description", e.target.value)
+                }
+                className={
+                  originalConfig.description !== formState.description
+                    ? "border-yellow-500"
+                    : ""
+                }
               />
               {originalConfig.description !== formState.description && (
                 <p className="text-xs text-yellow-600">
@@ -463,7 +499,9 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
               </div>
               <Switch
                 checked={formState.enabled}
-                onCheckedChange={(checked) => handleInputChange('enabled', checked)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("enabled", checked)
+                }
               />
             </div>
 
@@ -471,7 +509,7 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
               <Label>Severity Level</Label>
               <Select
                 value={formState.severity}
-                onValueChange={(value) => handleInputChange('severity', value)}
+                onValueChange={(value) => handleInputChange("severity", value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select severity" />
@@ -489,16 +527,24 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
           {/* Metric Thresholds */}
           <Tabs defaultValue="system" className="w-full">
             <TabsList className="w-full">
-              <TabsTrigger value="system" className="flex-1">System</TabsTrigger>
-              <TabsTrigger value="application" className="flex-1">Application</TabsTrigger>
-              <TabsTrigger value="database" className="flex-1">Database</TabsTrigger>
+              <TabsTrigger value="system" className="flex-1">
+                System
+              </TabsTrigger>
+              <TabsTrigger value="application" className="flex-1">
+                Application
+              </TabsTrigger>
+              <TabsTrigger value="database" className="flex-1">
+                Database
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="system" className="space-y-4 mt-4">
               <MetricThresholdConfig
                 metricName="CPU Usage"
                 threshold={formState.systemMetrics.cpuUsage}
-                onChange={(value) => handleMetricChange('systemMetrics', 'cpuUsage', value)}
+                onChange={(value) =>
+                  handleMetricChange("systemMetrics", "cpuUsage", value)
+                }
                 unit="%"
                 description="Alert when CPU usage exceeds threshold"
                 previousValue={originalConfig.systemMetrics.cpuUsage}
@@ -506,7 +552,9 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
               <MetricThresholdConfig
                 metricName="Memory Usage"
                 threshold={formState.systemMetrics.memoryUsage}
-                onChange={(value) => handleMetricChange('systemMetrics', 'memoryUsage', value)}
+                onChange={(value) =>
+                  handleMetricChange("systemMetrics", "memoryUsage", value)
+                }
                 unit="%"
                 description="Alert when memory usage exceeds threshold"
                 previousValue={originalConfig.systemMetrics.memoryUsage}
@@ -514,7 +562,9 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
               <MetricThresholdConfig
                 metricName="Disk Usage"
                 threshold={formState.systemMetrics.diskUsage}
-                onChange={(value) => handleMetricChange('systemMetrics', 'diskUsage', value)}
+                onChange={(value) =>
+                  handleMetricChange("systemMetrics", "diskUsage", value)
+                }
                 unit="%"
                 description="Alert when disk usage exceeds threshold"
                 previousValue={originalConfig.systemMetrics.diskUsage}
@@ -525,7 +575,9 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
               <MetricThresholdConfig
                 metricName="Error Rate"
                 threshold={formState.applicationMetrics.errorRate}
-                onChange={(value) => handleMetricChange('applicationMetrics', 'errorRate', value)}
+                onChange={(value) =>
+                  handleMetricChange("applicationMetrics", "errorRate", value)
+                }
                 unit="%"
                 description="Alert when error rate exceeds threshold"
                 previousValue={originalConfig.applicationMetrics.errorRate}
@@ -533,7 +585,13 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
               <MetricThresholdConfig
                 metricName="Response Time"
                 threshold={formState.applicationMetrics.responseTime}
-                onChange={(value) => handleMetricChange('applicationMetrics', 'responseTime', value)}
+                onChange={(value) =>
+                  handleMetricChange(
+                    "applicationMetrics",
+                    "responseTime",
+                    value
+                  )
+                }
                 unit="ms"
                 description="Alert when response time exceeds threshold"
                 previousValue={originalConfig.applicationMetrics.responseTime}
@@ -541,9 +599,17 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
               <MetricThresholdConfig
                 metricName="Request Queue Size"
                 threshold={formState.applicationMetrics.requestQueueSize}
-                onChange={(value) => handleMetricChange('applicationMetrics', 'requestQueueSize', value)}
+                onChange={(value) =>
+                  handleMetricChange(
+                    "applicationMetrics",
+                    "requestQueueSize",
+                    value
+                  )
+                }
                 description="Alert when request queue size exceeds threshold"
-                previousValue={originalConfig.applicationMetrics.requestQueueSize}
+                previousValue={
+                  originalConfig.applicationMetrics.requestQueueSize
+                }
               />
             </TabsContent>
 
@@ -551,15 +617,25 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
               <MetricThresholdConfig
                 metricName="Connection Pool Usage"
                 threshold={formState.databaseMetrics.connectionPoolUsage}
-                onChange={(value) => handleMetricChange('databaseMetrics', 'connectionPoolUsage', value)}
+                onChange={(value) =>
+                  handleMetricChange(
+                    "databaseMetrics",
+                    "connectionPoolUsage",
+                    value
+                  )
+                }
                 unit="%"
                 description="Alert when connection pool usage exceeds threshold"
-                previousValue={originalConfig.databaseMetrics.connectionPoolUsage}
+                previousValue={
+                  originalConfig.databaseMetrics.connectionPoolUsage
+                }
               />
               <MetricThresholdConfig
                 metricName="Query Time"
                 threshold={formState.databaseMetrics.queryTime}
-                onChange={(value) => handleMetricChange('databaseMetrics', 'queryTime', value)}
+                onChange={(value) =>
+                  handleMetricChange("databaseMetrics", "queryTime", value)
+                }
                 unit="ms"
                 description="Alert when query time exceeds threshold"
                 previousValue={originalConfig.databaseMetrics.queryTime}
@@ -567,7 +643,9 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
               <MetricThresholdConfig
                 metricName="Deadlock Count"
                 threshold={formState.databaseMetrics.deadlockCount}
-                onChange={(value) => handleMetricChange('databaseMetrics', 'deadlockCount', value)}
+                onChange={(value) =>
+                  handleMetricChange("databaseMetrics", "deadlockCount", value)
+                }
                 description="Alert when deadlock count exceeds threshold"
                 previousValue={originalConfig.databaseMetrics.deadlockCount}
               />
@@ -576,11 +654,12 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
 
           {/* Connection Status */}
           {!wsConnected && (
-            <Alert variant="warning" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+            <Alert
+              variant="warning"
+              className="bg-yellow-50 text-yellow-700 border-yellow-200"
+            >
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Real-time updates unavailable
-              </AlertDescription>
+              <AlertDescription>Real-time updates unavailable</AlertDescription>
             </Alert>
           )}
 
@@ -592,20 +671,21 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
             </Alert>
           )}
           {success && (
-            <Alert variant="success" className="bg-green-50 text-green-700 border-green-200">
+            <Alert
+              variant="success"
+              className="bg-green-50 text-green-700 border-green-200"
+            >
               <CheckCircle2 className="h-4 w-4" />
-              <AlertDescription>Configuration updated successfully!</AlertDescription>
+              <AlertDescription>
+                Configuration updated successfully!
+              </AlertDescription>
             </Alert>
           )}
         </CardContent>
 
         <CardFooter className="flex justify-between space-x-2">
           <div className="flex space-x-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-            >
+            <Button type="button" variant="outline" onClick={onCancel}>
               Cancel
             </Button>
             <Button
@@ -618,12 +698,9 @@ const AlertConfigEdit = ({ configId, onSave, onCancel }) => {
               Reset Changes
             </Button>
           </div>
-          <Button
-            type="submit"
-            disabled={isSubmitting || !hasChanges}
-          >
+          <Button type="submit" disabled={isSubmitting || !hasChanges}>
             {isSubmitting ? (
-              'Saving...'
+              "Saving..."
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />

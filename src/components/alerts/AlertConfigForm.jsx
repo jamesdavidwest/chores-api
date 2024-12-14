@@ -1,28 +1,39 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { debounce } from 'lodash';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from "react";
+import { debounce } from "lodash";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 
 // Subcomponent for metric threshold configuration
-const MetricThresholdConfig = ({ 
-  metricName, 
-  threshold, 
-  onChange, 
-  unit = '', 
-  description = '' 
+const MetricThresholdConfig = ({
+  metricName,
+  threshold,
+  onChange,
+  unit = "",
+  description = "",
 }) => (
   <div className="space-y-2">
     <Label className="text-sm font-medium">{metricName}</Label>
-    {description && (
-      <p className="text-xs text-gray-500">{description}</p>
-    )}
+    {description && <p className="text-xs text-gray-500">{description}</p>}
     <div className="flex items-center space-x-2">
       <Input
         type="number"
@@ -43,25 +54,25 @@ const AlertConfigForm = () => {
 
   // Form state
   const [formState, setFormState] = useState({
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     enabled: true,
-    severity: 'warning',
+    severity: "warning",
     systemMetrics: {
       cpuUsage: 80,
       memoryUsage: 85,
-      diskUsage: 90
+      diskUsage: 90,
     },
     applicationMetrics: {
       errorRate: 5,
       responseTime: 1000,
-      requestQueueSize: 100
+      requestQueueSize: 100,
     },
     databaseMetrics: {
       connectionPoolUsage: 80,
       queryTime: 500,
-      deadlockCount: 1
-    }
+      deadlockCount: 1,
+    },
   });
 
   // Error state
@@ -74,50 +85,49 @@ const AlertConfigForm = () => {
   // WebSocket connection and handlers
   useEffect(() => {
     let ws = null;
-    
+
     const connectWebSocket = () => {
       try {
         ws = window.MetricsWebSocketService.connect();
-        
-        ws.addEventListener('open', () => {
+
+        ws.addEventListener("open", () => {
           setWsConnected(true);
-          console.log('WebSocket connected');
+          console.log("WebSocket connected");
         });
 
-        ws.addEventListener('close', () => {
+        ws.addEventListener("close", () => {
           setWsConnected(false);
-          console.log('WebSocket disconnected');
+          console.log("WebSocket disconnected");
           // Attempt to reconnect after 5 seconds
           setTimeout(connectWebSocket, 5000);
         });
 
-        ws.addEventListener('message', (event) => {
+        ws.addEventListener("message", (event) => {
           const data = JSON.parse(event.data);
-          
+
           // Handle different types of messages
           switch (data.type) {
-            case 'CONFIG_UPDATE':
-              setConfigSyncStatus('Config synchronized');
+            case "CONFIG_UPDATE":
+              setConfigSyncStatus("Config synchronized");
               break;
-            case 'METRIC_UPDATE':
+            case "METRIC_UPDATE":
               // Update real-time metrics if needed
               break;
-            case 'VALIDATION_ERROR':
+            case "VALIDATION_ERROR":
               setError(data.message);
               break;
             default:
-              console.log('Unknown message type:', data.type);
+              console.log("Unknown message type:", data.type);
           }
         });
 
-        ws.addEventListener('error', (error) => {
-          console.error('WebSocket error:', error);
-          setError('WebSocket connection error');
+        ws.addEventListener("error", (error) => {
+          console.error("WebSocket error:", error);
+          setError("WebSocket connection error");
         });
-
       } catch (error) {
-        console.error('Failed to connect to WebSocket:', error);
-        setError('Failed to establish real-time connection');
+        console.error("Failed to connect to WebSocket:", error);
+        setError("Failed to establish real-time connection");
       }
     };
 
@@ -136,7 +146,8 @@ const AlertConfigForm = () => {
     debounce(async (config) => {
       try {
         if (wsConnected) {
-          const validationResult = await window.AlertNotificationService.validateConfig(config);
+          const validationResult =
+            await window.AlertNotificationService.validateConfig(config);
           if (!validationResult.isValid) {
             setError(validationResult.message);
           } else {
@@ -144,7 +155,7 @@ const AlertConfigForm = () => {
           }
         }
       } catch (err) {
-        console.error('Validation error:', err);
+        console.error("Validation error:", err);
       }
     }, 500),
     [wsConnected]
@@ -154,28 +165,28 @@ const AlertConfigForm = () => {
   const handleInputChange = (field, value) => {
     const newState = {
       ...formState,
-      [field]: value
+      [field]: value,
     };
-    
+
     setFormState(newState);
     debouncedValidate(newState);
   };
 
   // Handle metric threshold changes
   const handleMetricChange = (category, metric, value) => {
-    setFormState(prev => ({
+    setFormState((prev) => ({
       ...prev,
       [category]: {
         ...prev[category],
-        [metric]: value
-      }
+        [metric]: value,
+      },
     }));
   };
 
   // Form validation
   const validateForm = () => {
     if (!formState.name.trim()) {
-      setError('Alert configuration name is required');
+      setError("Alert configuration name is required");
       return false;
     }
 
@@ -183,11 +194,14 @@ const AlertConfigForm = () => {
     const { systemMetrics, applicationMetrics, databaseMetrics } = formState;
 
     if (
-      systemMetrics.cpuUsage < 0 || systemMetrics.cpuUsage > 100 ||
-      systemMetrics.memoryUsage < 0 || systemMetrics.memoryUsage > 100 ||
-      systemMetrics.diskUsage < 0 || systemMetrics.diskUsage > 100
+      systemMetrics.cpuUsage < 0 ||
+      systemMetrics.cpuUsage > 100 ||
+      systemMetrics.memoryUsage < 0 ||
+      systemMetrics.memoryUsage > 100 ||
+      systemMetrics.diskUsage < 0 ||
+      systemMetrics.diskUsage > 100
     ) {
-      setError('System metric thresholds must be between 0 and 100');
+      setError("System metric thresholds must be between 0 and 100");
       return false;
     }
 
@@ -196,16 +210,17 @@ const AlertConfigForm = () => {
       applicationMetrics.responseTime < 0 ||
       applicationMetrics.requestQueueSize < 0
     ) {
-      setError('Application metric thresholds cannot be negative');
+      setError("Application metric thresholds cannot be negative");
       return false;
     }
 
     if (
-      databaseMetrics.connectionPoolUsage < 0 || databaseMetrics.connectionPoolUsage > 100 ||
+      databaseMetrics.connectionPoolUsage < 0 ||
+      databaseMetrics.connectionPoolUsage > 100 ||
       databaseMetrics.queryTime < 0 ||
       databaseMetrics.deadlockCount < 0
     ) {
-      setError('Database metric thresholds are invalid');
+      setError("Database metric thresholds are invalid");
       return false;
     }
 
@@ -230,45 +245,46 @@ const AlertConfigForm = () => {
         ...formState,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        status: 'active'
+        status: "active",
       };
 
       // Send to AlertNotificationService
-      const result = await window.AlertNotificationService.createAlertConfig(alertConfig);
+      const result =
+        await window.AlertNotificationService.createAlertConfig(alertConfig);
 
       // Notify through WebSocket
       if (wsConnected) {
         window.MetricsWebSocketService.send({
-          type: 'CONFIG_CREATE',
-          payload: result
+          type: "CONFIG_CREATE",
+          payload: result,
         });
       }
 
       setSuccess(true);
       // Reset form after successful submission
       setFormState({
-        name: '',
-        description: '',
+        name: "",
+        description: "",
         enabled: true,
-        severity: 'warning',
+        severity: "warning",
         systemMetrics: {
           cpuUsage: 80,
           memoryUsage: 85,
-          diskUsage: 90
+          diskUsage: 90,
         },
         applicationMetrics: {
           errorRate: 5,
           responseTime: 1000,
-          requestQueueSize: 100
+          requestQueueSize: 100,
         },
         databaseMetrics: {
           connectionPoolUsage: 80,
           queryTime: 500,
-          deadlockCount: 1
-        }
+          deadlockCount: 1,
+        },
       });
     } catch (err) {
-      setError(err.message || 'Failed to create alert configuration');
+      setError(err.message || "Failed to create alert configuration");
     } finally {
       setIsSubmitting(false);
     }
@@ -280,7 +296,8 @@ const AlertConfigForm = () => {
         <CardHeader>
           <CardTitle>Create Alert Configuration</CardTitle>
           <CardDescription>
-            Configure alert thresholds for system, application, and database metrics
+            Configure alert thresholds for system, application, and database
+            metrics
           </CardDescription>
         </CardHeader>
 
@@ -292,7 +309,7 @@ const AlertConfigForm = () => {
               <Input
                 id="name"
                 value={formState.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
+                onChange={(e) => handleInputChange("name", e.target.value)}
                 placeholder="Enter configuration name"
               />
             </div>
@@ -302,7 +319,9 @@ const AlertConfigForm = () => {
               <Input
                 id="description"
                 value={formState.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("description", e.target.value)
+                }
                 placeholder="Enter configuration description"
               />
             </div>
@@ -316,7 +335,9 @@ const AlertConfigForm = () => {
               </div>
               <Switch
                 checked={formState.enabled}
-                onCheckedChange={(checked) => handleInputChange('enabled', checked)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("enabled", checked)
+                }
               />
             </div>
 
@@ -324,7 +345,7 @@ const AlertConfigForm = () => {
               <Label>Severity Level</Label>
               <Select
                 value={formState.severity}
-                onValueChange={(value) => handleInputChange('severity', value)}
+                onValueChange={(value) => handleInputChange("severity", value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select severity" />
@@ -342,30 +363,42 @@ const AlertConfigForm = () => {
           {/* Metric Thresholds */}
           <Tabs defaultValue="system" className="w-full">
             <TabsList className="w-full">
-              <TabsTrigger value="system" className="flex-1">System</TabsTrigger>
-              <TabsTrigger value="application" className="flex-1">Application</TabsTrigger>
-              <TabsTrigger value="database" className="flex-1">Database</TabsTrigger>
+              <TabsTrigger value="system" className="flex-1">
+                System
+              </TabsTrigger>
+              <TabsTrigger value="application" className="flex-1">
+                Application
+              </TabsTrigger>
+              <TabsTrigger value="database" className="flex-1">
+                Database
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="system" className="space-y-4 mt-4">
               <MetricThresholdConfig
                 metricName="CPU Usage"
                 threshold={formState.systemMetrics.cpuUsage}
-                onChange={(value) => handleMetricChange('systemMetrics', 'cpuUsage', value)}
+                onChange={(value) =>
+                  handleMetricChange("systemMetrics", "cpuUsage", value)
+                }
                 unit="%"
                 description="Alert when CPU usage exceeds threshold"
               />
               <MetricThresholdConfig
                 metricName="Memory Usage"
                 threshold={formState.systemMetrics.memoryUsage}
-                onChange={(value) => handleMetricChange('systemMetrics', 'memoryUsage', value)}
+                onChange={(value) =>
+                  handleMetricChange("systemMetrics", "memoryUsage", value)
+                }
                 unit="%"
                 description="Alert when memory usage exceeds threshold"
               />
               <MetricThresholdConfig
                 metricName="Disk Usage"
                 threshold={formState.systemMetrics.diskUsage}
-                onChange={(value) => handleMetricChange('systemMetrics', 'diskUsage', value)}
+                onChange={(value) =>
+                  handleMetricChange("systemMetrics", "diskUsage", value)
+                }
                 unit="%"
                 description="Alert when disk usage exceeds threshold"
               />
@@ -375,21 +408,35 @@ const AlertConfigForm = () => {
               <MetricThresholdConfig
                 metricName="Error Rate"
                 threshold={formState.applicationMetrics.errorRate}
-                onChange={(value) => handleMetricChange('applicationMetrics', 'errorRate', value)}
+                onChange={(value) =>
+                  handleMetricChange("applicationMetrics", "errorRate", value)
+                }
                 unit="%"
                 description="Alert when error rate exceeds threshold"
               />
               <MetricThresholdConfig
                 metricName="Response Time"
                 threshold={formState.applicationMetrics.responseTime}
-                onChange={(value) => handleMetricChange('applicationMetrics', 'responseTime', value)}
+                onChange={(value) =>
+                  handleMetricChange(
+                    "applicationMetrics",
+                    "responseTime",
+                    value
+                  )
+                }
                 unit="ms"
                 description="Alert when response time exceeds threshold"
               />
               <MetricThresholdConfig
                 metricName="Request Queue Size"
                 threshold={formState.applicationMetrics.requestQueueSize}
-                onChange={(value) => handleMetricChange('applicationMetrics', 'requestQueueSize', value)}
+                onChange={(value) =>
+                  handleMetricChange(
+                    "applicationMetrics",
+                    "requestQueueSize",
+                    value
+                  )
+                }
                 description="Alert when request queue size exceeds threshold"
               />
             </TabsContent>
@@ -398,21 +445,31 @@ const AlertConfigForm = () => {
               <MetricThresholdConfig
                 metricName="Connection Pool Usage"
                 threshold={formState.databaseMetrics.connectionPoolUsage}
-                onChange={(value) => handleMetricChange('databaseMetrics', 'connectionPoolUsage', value)}
+                onChange={(value) =>
+                  handleMetricChange(
+                    "databaseMetrics",
+                    "connectionPoolUsage",
+                    value
+                  )
+                }
                 unit="%"
                 description="Alert when connection pool usage exceeds threshold"
               />
               <MetricThresholdConfig
                 metricName="Query Time"
                 threshold={formState.databaseMetrics.queryTime}
-                onChange={(value) => handleMetricChange('databaseMetrics', 'queryTime', value)}
+                onChange={(value) =>
+                  handleMetricChange("databaseMetrics", "queryTime", value)
+                }
                 unit="ms"
                 description="Alert when query time exceeds threshold"
               />
               <MetricThresholdConfig
                 metricName="Deadlock Count"
                 threshold={formState.databaseMetrics.deadlockCount}
-                onChange={(value) => handleMetricChange('databaseMetrics', 'deadlockCount', value)}
+                onChange={(value) =>
+                  handleMetricChange("databaseMetrics", "deadlockCount", value)
+                }
                 description="Alert when deadlock count exceeds threshold"
               />
             </TabsContent>
@@ -420,7 +477,10 @@ const AlertConfigForm = () => {
 
           {/* Connection Status */}
           {!wsConnected && (
-            <Alert variant="warning" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+            <Alert
+              variant="warning"
+              className="bg-yellow-50 text-yellow-700 border-yellow-200"
+            >
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 Real-time connection unavailable. Some features may be limited.
@@ -444,19 +504,21 @@ const AlertConfigForm = () => {
             </Alert>
           )}
           {success && (
-            <Alert variant="success" className="bg-green-50 text-green-700 border-green-200">
+            <Alert
+              variant="success"
+              className="bg-green-50 text-green-700 border-green-200"
+            >
               <CheckCircle2 className="h-4 w-4" />
-              <AlertDescription>Alert configuration created successfully!</AlertDescription>
+              <AlertDescription>
+                Alert configuration created successfully!
+              </AlertDescription>
             </Alert>
           )}
         </CardContent>
 
         <CardFooter className="flex justify-end space-x-2">
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Creating...' : 'Create Configuration'}
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Creating..." : "Create Configuration"}
           </Button>
         </CardFooter>
       </Card>
